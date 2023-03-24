@@ -3,4 +3,4 @@ written by John Wylie (6616262436, wyliej@rpi.edu)
 
 
 
-A machine learning project for MANE 6962 at RPI to use ML methods to predict wind turbine loads based on a number of features from real data.
+A project for MANE 6962 at RPI to use ML methods to predict wind turbine loads based on a number of features from real data.
