@@ -1,5 +1,5 @@
 # wind-turbine-regression
-# Wind Turbine Aerodynamic Force Prediction via Regression of Wind Tunnel Data
+# Wind Turbine Airfoil Aerodynamic Force Prediction via Regression of Wind Tunnel Data
 written by John Wylie (6616262436, wyliej@rpi.edu)
 
 # Overview:
