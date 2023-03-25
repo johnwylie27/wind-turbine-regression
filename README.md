@@ -3,7 +3,7 @@
 written by John Wylie (6616262436, wyliej@rpi.edu)
 
 # Overview:
-A project for MANE 6962 at RPI to use ML methods to predict wind turbine loads based on a number of features from real data.
+A project for MANE 6962 at RPI to use ML methods to predict wind turbine airfoil forces and moments based on a number of features from real data.
 
 # Description:
 This project uses data from [zenodo.org](https://zenodo.org/record/3482801). The authors presented the data in a report to IRPWind detailing a set of ex situ wind tunnel and in situ wind turbine experiments to investigate the effect of surface roughness on wind turbine blade performance. The researchers hail from organizations such as TU Delft, a leading technical institute in the Netherlands, and DTU Wind Energy, a public research institution.
