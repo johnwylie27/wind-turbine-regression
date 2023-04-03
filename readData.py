@@ -56,10 +56,9 @@ for i in range(len(files)):
             frames = [df, df_list[i]]
             df = pd.concat(frames)
         print(flnm)
-
-
-## Add features from testlist to dataframes
-
-## Combine data frames into one single data frame
+# Remove Flap column
+print(df[df.columns[:14]])
+print(df[df.columns[15:]])
+df = pd.concat([df[df.columns[:14]], df[df.columns[15:]]], axis=1)
 
 ## Convert df to numpy array and pre-process features
