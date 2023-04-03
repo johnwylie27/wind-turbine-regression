@@ -61,4 +61,10 @@ print(df[df.columns[:14]])
 print(df[df.columns[15:]])
 df = pd.concat([df[df.columns[:14]], df[df.columns[15:]]], axis=1)
 
+# Save to .csv file
+out_flnm1 = 'C:\\Users\\John Wylie\\Documents\\RPI\\Courses\\MANE 6962 Machine Learning\\Project Git\\wind-turbine-regression\\df_data.csv'
+df.to_csv(out_flnm1, sep='\t')
+
+out_flnm2 = 'C:\\Users\\John Wylie\\Documents\\RPI\\Courses\\MANE 6962 Machine Learning\\Project Git\\wind-turbine-regression\\np_data.csv'
+df.to_csv(out_flnm2, sep='\t')
 ## Convert df to numpy array and pre-process features
