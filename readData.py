@@ -60,9 +60,9 @@ for i in range(len(files)):
 ## Remove Cn, Ct, Cd-press, Cl-press, Flap, Cn-corr, Ct-corr, Cm-corr columns
 # Column numbers to skip: 6-9, 14, 77-79
 
-# Inputs variable: Alpha, M, Q, V, Z_w.r., Cp values, Grade, Grit Size, Lower/Upper Cov.
+# Input variables: Alpha, M, Q, V, Z_w.r., Cp values, Grade, Grit Size, Lower/Upper Cov.
 out_temp1 = pd.concat([df[df.columns[1]], df[df.columns[10:14]], df[df.columns[15:78]], df[df.columns[81:]]], axis=1)  
-# Outputs variable: C_l, C_d, C_m
+# Output variables: C_l, C_d, C_m
 out_temp2 = pd.concat([df[df.columns[2:5]]])
 
 ## Save to .csv file
