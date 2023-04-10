@@ -56,15 +56,17 @@ for i in range(len(files)):
             frames = [df, df_list[i]]
             df = pd.concat(frames)
         print(flnm)
-# Remove Flap column
-print(df[df.columns[:14]])
-print(df[df.columns[15:]])
-df = pd.concat([df[df.columns[:14]], df[df.columns[15:]]], axis=1)
+        
+## Remove Cn, Ct, Cd-press, Cl-press, Flap, Cn-corr, Ct-corr, Cm-corr columns
+# Column numbers to skip: 6-9, 14, 77-79
 
-# Save to .csv file
-out_flnm1 = 'C:\\Users\\John Wylie\\Documents\\RPI\\Courses\\MANE 6962 Machine Learning\\Project Git\\wind-turbine-regression\\df_data.csv'
-df.to_csv(out_flnm1, sep='\t')
+# Inputs variable: Alpha, M, Q, V, Z_w.r., Cp values, Grade, Grit Size, Lower/Upper Cov.
+out_temp1 = pd.concat([df[df.columns[1]], df[df.columns[10:14]], df[df.columns[15:78]], df[df.columns[81:]]], axis=1)  
+# Outputs variable: C_l, C_d, C_m
+out_temp2 = pd.concat([df[df.columns[2:5]]])
 
-out_flnm2 = 'C:\\Users\\John Wylie\\Documents\\RPI\\Courses\\MANE 6962 Machine Learning\\Project Git\\wind-turbine-regression\\np_data.csv'
-df.to_csv(out_flnm2, sep='\t')
-## Convert df to numpy array and pre-process features
+## Save to .csv file
+out_flnm = ['C:\\Users\\John Wylie\\Documents\\RPI\\Courses\\MANE 6962 Machine Learning\\Project Git\\wind-turbine-regression\\df_data_X.csv']
+out_flnm.append('C:\\Users\\John Wylie\\Documents\\RPI\\Courses\\MANE 6962 Machine Learning\\Project Git\\wind-turbine-regression\\df_data_y.csv')
+out_temp1.to_csv(out_flnm[0], sep='\t')
+out_temp2.to_csv(out_flnm[1], sep='\t')
