@@ -4,13 +4,20 @@
 import numpy as np
 import pandas as pd
 import sklearn
+from sklearn.model_selection import train_test_split
+from sklearn.metrics import mean_squared_error
 import seaborn as sns
 import matplotlib.pyplot as plt
 import tensorflow as tf
 from tensorflow import keras
+from keras.models import Sequential
+from keras.layers import Dense
+from keras import optimizers
 
 ## Starting Parameters
-plot = 0
+pp_plt = 0 # boolean to determine whether to plot pairplot figure
+nn = 1 # boolean to determine whether to run the neural network
+FS = 15 # font size for plotting labels
 
 ## Load Data
 dataFileX = 'C:\\Users\\John Wylie\\Documents\\RPI\\Courses\\MANE 6962 Machine Learning\\Project Git\\wind-turbine-regression\\df_data_X.csv'
@@ -47,6 +54,43 @@ for i in range(p):
     y[:,i] = (y[:,i] - np.mean(y[:,i])) / np.std(y[:,i])
 
 ## Visualize the Data
-if plot == 1:
+if pp_plt == 1:
     sns.pairplot(dfX2, kind='scatter')
 
+## Split Data into Training and Testing Splits
+X1_train, X1_test, y_train, y_test = train_test_split(X1, y, test_size=0.3, random_state=123)
+X2_train, X2_test, y_train, y_test = train_test_split(X2, y, test_size=0.3, random_state=123)
+
+if nn == 1:
+    alpha = 0.01 # learning rate for the optimizer
+    epo = 400 # number of epochs
+    
+    model = Sequential()
+    model.add(Dense(10, input_dim=n2, activation='relu')) # one input neuron
+    model.add(Dense(10, activation='relu')) # two neurons in single hidden layer
+    model.add(Dense(3)) # one output neuron
+    opt = tf.keras.optimizers.experimental.SGD(learning_rate=alpha, momentum=0) # stochastic gradient descent optimizer
+    mse = tf.keras.losses.MeanSquaredError(reduction=tf.keras.losses.Reduction.SUM) # mean squared error for loss calculation
+    model.compile(loss=mse, optimizer=opt, metrics=['mse', 'mae', 'mape'])
+    tr_history2 = model.fit(X2_train, y_train, epochs=epo, validation_data=(X2_test, y_test), verbose=0, use_multiprocessing=-3) # validation for monitoring validation loss and metrics at the end of each epoch
+    model.summary()
+    y_pred2 = model.predict(X2_test, verbose=0, use_multiprocessing=-3)
+    test_loss2 = mean_squared_error(y_test, y_pred2)
+    print(test_loss2)
+    
+    # Plot Results
+    plt.figure(figsize=(8, 5))
+    plt.plot(tr_history2.epoch, tr_history2.history['loss'], 'o-', linewidth=0.5, markersize=2, label=('training loss'))
+    plt.plot(tr_history2.epoch, tr_history2.history['val_loss'], 'o-', linewidth=0.5, markersize=2, label=('validation loss'))
+    plt.xlabel('number of epochs', fontsize = FS)
+    plt.ylabel('loss', fontsize = FS)
+    plt.title('Training/Testing Loss Comparison', fontsize = FS)
+    plt.legend(loc='upper right')
+    
+    plt.figure(figsize=(8, 5))
+    plt.plot(tr_history2.epoch, tr_history2.history['mae'], 'o-', linewidth=0.5, markersize=2, label=('training mse'))
+    plt.plot(tr_history2.epoch, tr_history2.history['val_mae'], 'o-', linewidth=0.5, markersize=2, label=('validation mse'))
+    plt.xlabel('number of epochs', fontsize = FS)
+    plt.ylabel('loss metric: mae', fontsize = FS)
+    plt.title('Training/Testing Loss Comparison', fontsize = FS)
+    plt.legend(loc='upper right')
