@@ -68,5 +68,5 @@ out_temp2 = pd.concat([df[df.columns[2:5]]])
 ## Save to .csv file
 out_flnm = ['C:\\Users\\John Wylie\\Documents\\RPI\\Courses\\MANE 6962 Machine Learning\\Project Git\\wind-turbine-regression\\df_data_X.csv']
 out_flnm.append('C:\\Users\\John Wylie\\Documents\\RPI\\Courses\\MANE 6962 Machine Learning\\Project Git\\wind-turbine-regression\\df_data_y.csv')
-out_temp1.to_csv(out_flnm[0], sep='\t')
-out_temp2.to_csv(out_flnm[1], sep='\t')
+out_temp1.to_csv(out_flnm[0], sep=',')
+out_temp2.to_csv(out_flnm[1], sep=',')
