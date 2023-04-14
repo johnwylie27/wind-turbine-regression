@@ -1,6 +1,7 @@
 # John Wylie, RIN# 661262436
 # This script performs a linear regression on the data files formatted in readData.py
 
+import sys
 import numpy as np
 import pandas as pd
 import sklearn
@@ -17,8 +18,8 @@ from keras import optimizers
 ## Starting Parameters
 pp_plt = 0 # boolean to determine whether to plot pairplot figure
 nn1 = 1 # boolean to determine whether to run the NN on the full data
-nn2 = 0 # boolean to determine whether to run the NN on the partial data
-nn3 = 0 # boolean to determine whether to run the NN on the pressure port data only
+nn2 = 1 # boolean to determine whether to run the NN on the partial data
+nn3 = 1 # boolean to determine whether to run the NN on the pressure port data only
 FS = 15 # font size for plotting labels
 
 ## Load Data
@@ -53,15 +54,68 @@ X2_original = X2.copy() # otherwise all the changes to X2 will apply to X2_origi
 X3_original = X3.copy()
 y_original = y.copy()
 
-# Normalize all values
+# Normalize all values: x_norm = (x-min)/(max-min)
+# Puts each feature value in the domain of [0,1]
+scaleX1 = np.zeros((n1, 2))
+scaleX2 = np.zeros((n2, 2))
+scaleX3 = np.zeros((n3, 2))
+scaley = np.zeros((p, 2))
 for i in range(n1):
-    X1[:,i] = (X1[:,i] - np.mean(X1[:,i])) / np.std(X1[:,i])
+    scaleX1[i,0] = np.min(X1[:,i])
+    scaleX1[i,1] = np.max(X1[:,i])
+    X1[:,i] = (X1[:,i] - scaleX1[i,0]) / (scaleX1[i,1] - scaleX1[i,0])
 for i in range(n2):
-    X2[:,i] = (X2[:,i] - np.mean(X2[:,i])) / np.std(X2[:,i])
+    scaleX2[i,0] = np.min(X2[:,i])
+    scaleX2[i,1] = np.max(X2[:,i])
+    X2[:,i] = (X2[:,i] - scaleX2[i,0]) / (scaleX2[i,1] - scaleX2[i,0])
 for i in range(n3):
-    X3[:,i] = (X3[:,i] - np.mean(X3[:,i])) / np.std(X3[:,i])
+    scaleX3[i,0] = np.min(X3[:,i])
+    scaleX3[i,1] = np.max(X3[:,i])
+    X3[:,i] = (X3[:,i] - scaleX3[i,0]) / (scaleX3[i,1] - scaleX3[i,0])
 for i in range(p):
-    y[:,i] = (y[:,i] - np.mean(y[:,i])) / np.std(y[:,i])
+    scaley[i,0] = np.min(y[:,i])
+    scaley[i,1] = np.max(y[:,i])
+    y[:,i] = (y[:,i] - scaley[i,0]) / (scaley[i,1] - scaley[i,0])
+
+# Shift values
+c = 0
+X1 = X1 + c
+X2 = X2 + c
+X3 = X3 + c
+y = y + c
+
+if np.isnan(np.sum(X1)):
+    sys.exit('X1 has NaN value')
+if np.isnan(np.sum(X2)):
+    sys.exit('X2 has NaN value')
+if np.isnan(np.sum(X3)):
+    sys.exit('X3 has NaN value')
+
+# Check that all data falls in the range of [0,1]
+plt.figure()
+for i in range(n1):
+    plt.plot(X1[:,i],'--')
+    plt.title('Scaled X1 Data')
+    plt.xlabel('Data Index')
+    plt.ylabel('Feature Value')
+plt.figure()
+for i in range(n2):
+    plt.plot(X2[:,i],'--')
+    plt.title('Scaled X2 Data')
+    plt.xlabel('Data Index')
+    plt.ylabel('Feature Value')
+plt.figure()
+for i in range(n3):
+    plt.plot(X3[:,i],'--')
+    plt.title('Scaled X3 Data')
+    plt.xlabel('Data Index')
+    plt.ylabel('Feature Value')
+plt.figure()
+for i in range(p):
+    plt.plot(y[:,i],'--')
+    plt.title('Scaled y Data')
+    plt.xlabel('Data Index')
+    plt.ylabel('Feature Value')
 
 ## Visualize the Data
 if pp_plt == 1:
@@ -74,12 +128,13 @@ X3_tr, X3_test, y_tr, y_test = train_test_split(X3, y, test_size=0.3, random_sta
 
 ## Neural Networks
 alpha = 0.01 # learning rate for the optimizer
-epo = 200 # number of epochs
+epo = 500 # number of epochs
 
+actf = 'relu'
 if nn1 == 1: # Run NN on data with pressure ports
     model = Sequential()
-    model.add(Dense(100, input_dim=n1, activation='relu')) # one input neuron
-    model.add(Dense(100, activation='relu')) # two neurons in single hidden layer
+    model.add(Dense(100, input_dim=n1, activation=actf)) # one input neuron
+    model.add(Dense(100, activation=actf)) # two neurons in single hidden layer
     model.add(Dense(3)) # one output neuron
     opt = tf.keras.optimizers.experimental.SGD(learning_rate=alpha, momentum=0) # stochastic gradient descent optimizer
     mse = tf.keras.losses.MeanSquaredError(reduction=tf.keras.losses.Reduction.SUM) # mean squared error for loss calculation
@@ -113,8 +168,8 @@ if nn1 == 1: # Run NN on data with pressure ports
     
 if nn2 == 1: # Run NN on data without pressure ports
     model = Sequential()
-    model.add(Dense(10, input_dim=n2, activation='relu')) # one input neuron
-    model.add(Dense(10, activation='relu')) # two neurons in single hidden layer
+    model.add(Dense(10, input_dim=n2, activation=actf)) # one input neuron
+    model.add(Dense(10, activation=actf)) # two neurons in single hidden layer
     model.add(Dense(3)) # one output neuron
     opt = tf.keras.optimizers.experimental.SGD(learning_rate=alpha, momentum=0) # stochastic gradient descent optimizer
     mse = tf.keras.losses.MeanSquaredError(reduction=tf.keras.losses.Reduction.SUM) # mean squared error for loss calculation
@@ -148,8 +203,8 @@ if nn2 == 1: # Run NN on data without pressure ports
     
 if nn3 == 1: # Run NN on pressure port data only
     model = Sequential()
-    model.add(Dense(10, input_dim=n3, activation='relu')) # one input neuron
-    model.add(Dense(10, activation='relu')) # two neurons in single hidden layer
+    model.add(Dense(10, input_dim=n3, activation=actf)) # one input neuron
+    model.add(Dense(10, activation=actf)) # two neurons in single hidden layer
     model.add(Dense(3)) # one output neuron
     opt = tf.keras.optimizers.experimental.SGD(learning_rate=alpha, momentum=0) # stochastic gradient descent optimizer
     mse = tf.keras.losses.MeanSquaredError(reduction=tf.keras.losses.Reduction.SUM) # mean squared error for loss calculation
