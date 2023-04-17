@@ -17,9 +17,9 @@ from keras import optimizers
 
 ## Starting Parameters
 pp_plt = 0 # boolean to determine whether to plot pairplot figure
-nn1 = 1 # boolean to determine whether to run the NN on the full data
+nn1 = 0 # boolean to determine whether to run the NN on the full data
 nn2 = 1 # boolean to determine whether to run the NN on the partial data
-nn3 = 1 # boolean to determine whether to run the NN on the pressure port data only
+nn3 = 0 # boolean to determine whether to run the NN on the pressure port data only
 FS = 15 # font size for plotting labels
 
 ## Load Data
@@ -127,14 +127,14 @@ X2_tr, X2_test, y_tr, y_test = train_test_split(X2, y, test_size=0.3, random_sta
 X3_tr, X3_test, y_tr, y_test = train_test_split(X3, y, test_size=0.3, random_state=123)
 
 ## Neural Networks
-alpha = 0.01 # learning rate for the optimizer
-epo = 500 # number of epochs
+alpha = 0.03 # learning rate for the optimizer
+epo = 300 # number of epochs
 
 actf = 'relu'
 if nn1 == 1: # Run NN on data with pressure ports
     model = Sequential()
     model.add(Dense(100, input_dim=n1, activation=actf)) # one input neuron
-    model.add(Dense(100, activation=actf)) # two neurons in single hidden layer
+    model.add(Dense(100, activation=actf)) # single hidden layer
     model.add(Dense(3)) # one output neuron
     opt = tf.keras.optimizers.experimental.SGD(learning_rate=alpha, momentum=0) # stochastic gradient descent optimizer
     mse = tf.keras.losses.MeanSquaredError(reduction=tf.keras.losses.Reduction.SUM) # mean squared error for loss calculation
@@ -167,9 +167,13 @@ if nn1 == 1: # Run NN on data with pressure ports
     plt.savefig('G:\\My Drive\\RPI\\MANE 6962 Machine Learning\\Project\\Figures\\X1_mae.png', dpi=300)
     
 if nn2 == 1: # Run NN on data without pressure ports
+    nneur = 200
     model = Sequential()
-    model.add(Dense(10, input_dim=n2, activation=actf)) # one input neuron
-    model.add(Dense(10, activation=actf)) # two neurons in single hidden layer
+    model.add(Dense(nneur, input_dim=n2, activation=actf)) # one input neuron
+    model.add(Dense(nneur, activation=actf)) # repeat alpha number of times
+    model.add(Dense(nneur, activation=actf)) # repeat alpha number of times
+    model.add(Dense(nneur, activation=actf)) # repeat alpha number of times
+    model.add(Dense(nneur, activation=actf)) # repeat alpha number of times
     model.add(Dense(3)) # one output neuron
     opt = tf.keras.optimizers.experimental.SGD(learning_rate=alpha, momentum=0) # stochastic gradient descent optimizer
     mse = tf.keras.losses.MeanSquaredError(reduction=tf.keras.losses.Reduction.SUM) # mean squared error for loss calculation
@@ -192,19 +196,19 @@ if nn2 == 1: # Run NN on data without pressure ports
     plt.savefig('G:\\My Drive\\RPI\\MANE 6962 Machine Learning\\Project\\Figures\\X2_loss.png', dpi=300)
     
     plt.figure(figsize=(8, 5))
-    plt.plot(tr_history2.epoch, tr_history2.history['mae'], 'o-', linewidth=0.5, markersize=2, label=('training mse'))
-    plt.plot(tr_history2.epoch, tr_history2.history['val_mae'], 'o-', linewidth=0.5, markersize=2, label=('validation mse'))
+    plt.plot(tr_history2.epoch, tr_history2.history['mse'], 'o-', linewidth=0.5, markersize=2, label=('training mse'))
+    plt.plot(tr_history2.epoch, tr_history2.history['val_mse'], 'o-', linewidth=0.5, markersize=2, label=('validation mse'))
     plt.xlabel('number of epochs', fontsize = FS)
-    plt.ylabel('loss metric: mae', fontsize = FS)
-    plt.ylim([0, 1.2*np.max(tr_history2.history['val_mae'])])
+    plt.ylabel('loss metric: mse', fontsize = FS)
+    plt.ylim([0, 1.2*np.max(tr_history2.history['val_mse'])])
     plt.title('Training/Testing Loss Comparison: Partial Data', fontsize = FS)
     plt.legend(loc='upper right')
-    plt.savefig('G:\\My Drive\\RPI\\MANE 6962 Machine Learning\\Project\\Figures\\X2_mae.png', dpi=300)
+    plt.savefig('G:\\My Drive\\RPI\\MANE 6962 Machine Learning\\Project\\Figures\\X2_mse.png', dpi=300)
     
 if nn3 == 1: # Run NN on pressure port data only
     model = Sequential()
     model.add(Dense(10, input_dim=n3, activation=actf)) # one input neuron
-    model.add(Dense(10, activation=actf)) # two neurons in single hidden layer
+    model.add(Dense(10, activation=actf)) # single hidden layer
     model.add(Dense(3)) # one output neuron
     opt = tf.keras.optimizers.experimental.SGD(learning_rate=alpha, momentum=0) # stochastic gradient descent optimizer
     mse = tf.keras.losses.MeanSquaredError(reduction=tf.keras.losses.Reduction.SUM) # mean squared error for loss calculation
