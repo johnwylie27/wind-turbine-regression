@@ -14,13 +14,15 @@ import tensorflow as tf
 from tensorflow import keras
 from keras.models import Sequential
 from keras.layers import Dense, Dropout
-from keras import optimizers
+from keras import optimizers, regularizers
 
 ## Starting Parameters
-pp_plt = 0 # boolean to determine whether to plot pairplot figure
-nn1 = 0 # boolean to determine whether to run the 1st NN hyperparameter tuning test
-nn2 = 0 # boolean to determine whether to run the 2nd NN hyperparameter tuning test
-nn3 = 1 # boolean to determine whether to run the 2rd NN hpyerparameter tuning test
+pp_plt = False # boolean to determine whether to plot pairplot figure
+nn1 = False # boolean: no. of neurons/no. of layers
+nn2 = False # boolean: learning rate/no. or epochs
+nn3 = False # boolean: dropout layers
+nn4 = False # boolean: refined architecture/regularization
+nn5 = True # boolean: 
 FS = 15 # font size for plotting labels
 
 ## Load Data
@@ -93,33 +95,35 @@ if np.isnan(np.sum(X3)):
     sys.exit('X3 has NaN value')
 
 # Check that all data falls in the range of [0,1]
-plt.figure()
-for i in range(n1):
-    plt.plot(X1[:,i],'--')
-    plt.title('Scaled X1 Data')
-    plt.xlabel('Data Index')
-    plt.ylabel('Feature Value')
-plt.figure()
-for i in range(n2):
-    plt.plot(X2[:,i],'--')
-    plt.title('Scaled X2 Data')
-    plt.xlabel('Data Index')
-    plt.ylabel('Feature Value')
-plt.figure()
-for i in range(n3):
-    plt.plot(X3[:,i],'--')
-    plt.title('Scaled X3 Data')
-    plt.xlabel('Data Index')
-    plt.ylabel('Feature Value')
-plt.figure()
-for i in range(p):
-    plt.plot(y[:,i],'--')
-    plt.title('Scaled y Data')
-    plt.xlabel('Data Index')
-    plt.ylabel('Feature Value')
+# =============================================================================
+# plt.figure()
+# for i in range(n1):
+#     plt.plot(X1[:,i],'--')
+#     plt.title('Scaled X1 Data')
+#     plt.xlabel('Data Index')
+#     plt.ylabel('Feature Value')
+# plt.figure()
+# for i in range(n2):
+#     plt.plot(X2[:,i],'--')
+#     plt.title('Scaled X2 Data')
+#     plt.xlabel('Data Index')
+#     plt.ylabel('Feature Value')
+# plt.figure()
+# for i in range(n3):
+#     plt.plot(X3[:,i],'--')
+#     plt.title('Scaled X3 Data')
+#     plt.xlabel('Data Index')
+#     plt.ylabel('Feature Value')
+# plt.figure()
+# for i in range(p):
+#     plt.plot(y[:,i],'--')
+#     plt.title('Scaled y Data')
+#     plt.xlabel('Data Index')
+#     plt.ylabel('Feature Value')
+# =============================================================================
 
 ## Visualize the Data
-if pp_plt == 1:
+if pp_plt:
     sns.pairplot(dfX2, kind='scatter')
 
 ## Split Data into Training and Testing Splits
@@ -128,7 +132,7 @@ X2_tr, X2_test, y_tr, y_test = train_test_split(X2, y, test_size=0.3, random_sta
 X3_tr, X3_test, y_tr, y_test = train_test_split(X3, y, test_size=0.3, random_state=123)
 
 actf = 'relu'
-if nn1 == 1: # Run NN on data with pressure ports
+if nn1: # #neurons/#layers
     tr_history = []
     his = []
     nneur = np.array([25, 50, 100, 200]) # number of neurons per laayer (barring output layer)
@@ -145,7 +149,7 @@ if nn1 == 1: # Run NN on data with pressure ports
     for i in range(len(nneur)):
         for j in range(len(nlayers)):
             model = Sequential()
-            model.add(Dense(nneur[i], input_dim=n2, activation=actf)) # one input neuron
+            model.add(Dense(nneur[i], input_dim=n2, activation=actf)) # input layer
             for k in range(nlayers[j]):
                 model.add(Dense(nneur[i], activation=actf)) # repeat nlayers number of times
             model.add(Dense(3)) # one output neuron
@@ -193,7 +197,7 @@ if nn1 == 1: # Run NN on data with pressure ports
     plt.legend(loc='upper right', ncol=2)
     plt.savefig('G:\\My Drive\\RPI\\MANE 6962 Machine Learning\\Project\\Figures\\NNArch2.png', dpi=300)
     
-if nn2 == 1: # Epoch/Learning Rate
+if nn2: # Epoch/Learning Rate
     tr_history = []
     his = []
     epoch = np.array([150, 200, 250, 300]) # number of epochs
@@ -209,7 +213,7 @@ if nn2 == 1: # Epoch/Learning Rate
     for i in range(len(epoch)):
         for j in range(len(alpha)):
             model = Sequential()
-            model.add(Dense(nneur, input_dim=n2, activation=actf)) # one input neuron
+            model.add(Dense(nneur, input_dim=n2, activation=actf)) # input layer
             model.add(Dense(nneur, activation=actf)) # repeat alpha number of times
             model.add(Dense(nneur, activation=actf)) # repeat alpha number of times
             model.add(Dense(nneur, activation=actf)) # repeat alpha number of times
@@ -241,7 +245,7 @@ if nn2 == 1: # Epoch/Learning Rate
     ax.set_yticklabels(epoch, fontsize=FS*3/4);
     plt.title('Validation Losses', fontsize=FS)
     plt.xlabel(r'$Learning Rate (\alpha$)', fontsize=FS)
-    plt.ylabel('Number of Epochs', fontsize=FS)
+    # plt.ylabel('Number of Epochs', fontsize=FS)
     plt.savefig('G:\\My Drive\\RPI\\MANE 6962 Machine Learning\\Project\\Figures\\NNEpochLR1v2.png', dpi=300)
     
     # Training and Validation Epoch Plots
@@ -260,22 +264,22 @@ if nn2 == 1: # Epoch/Learning Rate
     plt.legend(loc='upper right', ncol=2)
     plt.savefig('G:\\My Drive\\RPI\\MANE 6962 Machine Learning\\Project\\Figures\\NNEpochLR2v2.png', dpi=300)
 
-if nn3 == 1: # Dropout Layer 
+if nn3: # Dropout Layer 
     tr_history = []
     his = []
     ind = np.array([0, 1, 2, 3, 4]) # number of epochs
     alpha = 0.03 # learning rate
     epoch = 300 # number of epochs
-    epoch = 3
-    # nneur = 200 # number of neurons per input/hidden layer
-    nneur = 20
+    # epoch = 3
+    nneur = 200 # number of neurons per input/hidden layer
+    # nneur = 20
     mse = tf.keras.losses.MeanSquaredError(reduction=tf.keras.losses.Reduction.SUM) # mean squared error for loss calculation
     
     tr_loss = np.zeros([len(ind),1])
     v_loss = np.zeros([len(ind),1])
     for i in range(len(ind)):
         model = Sequential()
-        model.add(Dense(nneur, input_dim=n2, activation=actf)) # one input neuron
+        model.add(Dense(nneur, input_dim=n2, activation=actf)) # input layer
         if ind[i] == 1:
             model.add(Dropout(0.2)) # Add dropout layer for specific trial
         model.add(Dense(nneur, activation=actf)) # repeat alpha number of times
@@ -311,7 +315,7 @@ if nn3 == 1: # Dropout Layer
     ax.set_yticklabels(ind, fontsize=FS*3/4);
     plt.title('Validation Losses', fontsize=FS)
     plt.xlabel('Dropout Test Index', fontsize=FS)
-    plt.ylabel('', fontsize=FS)
+    # plt.ylabel('', fontsize=FS)
     plt.savefig('G:\\My Drive\\RPI\\MANE 6962 Machine Learning\\Project\\Figures\\NNDropout1.png', dpi=300)
     
     # Training and Validation Epoch Plots
@@ -319,11 +323,148 @@ if nn3 == 1: # Dropout Layer
     co = list(plt.rcParams['axes.prop_cycle'].by_key()['color']) + ['crimson', 'indigo', 'orange', 'red', 'blue', 'green', 'brown']
     plt.figure(figsize=(12, 7))
     for i in range(len(ind)):
-        plt.plot(np.arange(1, epoch, 1), his[ct].history['loss'], '^--', linewidth=2, markersize=8, label=f'Training configuration {ind[i]}', color=co[ct])
-        plt.plot(np.arange(1, epoch, 1), his[ct].history['val_loss'], 'v--', linewidth=2, markersize=8, label=f'Validation configuration {ind[i]}', color=co[ct])
+        plt.plot(np.arange(0, epoch, 1)+1, his[ct].history['loss'], '^--', linewidth=2, markersize=8, label=f'Training configuration {ind[i]}', color=co[ct])
+        plt.plot(np.arange(0, epoch, 1)+1, his[ct].history['val_loss'], 'v--', linewidth=2, markersize=8, label=f'Validation configuration {ind[i]}', color=co[ct])
         ct = ct+1
     plt.xlabel('Epoch', fontsize = FS)
     plt.ylabel('Loss', fontsize = FS)
     plt.title('Training/Testing Loss Comparison', fontsize = FS)
     plt.legend(loc='upper right', ncol=2)
     plt.savefig('G:\\My Drive\\RPI\\MANE 6962 Machine Learning\\Project\\Figures\\NNDropout2.png', dpi=300)
+
+if nn4: # Refined Architecture and Regularization
+    tr_history = []
+    his = []
+    reg = np.array([0, regularizers.L1(1e-4), regularizers.L2(1e-4), regularizers.L1L2(1e-4)]) # regularizers
+    arch = []
+    arch.append(np.array([200, 200, 200, 200]))
+    arch.append(np.array([512, 256, 32]))
+    arch.append(np.array([256, 256, 128, 128, 32]))
+    alpha = 0.03 # learning rate
+    epoch = 300 # number of epochs
+    # epoch = 3
+    nneur = 200 # number of neurons per input/hidden layer
+    # nneur = 20
+    mse = tf.keras.losses.MeanSquaredError(reduction=tf.keras.losses.Reduction.SUM) # mean squared error for loss calculation
+    
+    tr_loss = np.zeros([len(reg),len(arch)])
+    v_loss = np.zeros([len(reg),len(arch)])
+    for i in range(len(reg)):
+        for j in range(len(arch)):
+            model = Sequential()
+            model.add(Dense(nneur, input_dim=n2, activation=actf)) # input layer
+            for k in range(len(arch[j])):
+                if i > 1:
+                    model.add(Dense(arch[j][k], activation=actf, kernel_regularizer=reg[i]))
+            model.add(Dense(3)) # one output neuron
+            opt = tf.keras.optimizers.legacy.SGD(learning_rate=alpha, momentum=0) # stochastic gradient descent optimizer
+            model.compile(loss=mse, optimizer=opt, metrics=['mse', 'mae', 'mape'])
+            model.summary()
+            history1 = model.fit(X2_tr, y_tr, epochs=epoch, validation_data=(X2_test, y_test), verbose=0, use_multiprocessing=-2) # validation for monitoring validation loss and metrics at the end of each epoch
+            his.append(history1)
+            tr_loss[i,j] = np.min(history1.history['loss']) # history1.history['loss'][-1]
+            v_loss[i,j] = np.min(history1.history['val_loss']) #history1.history['val_loss'][-1]
+            print(f'Completed test with regularizer {reg[i]} and configuration {j} ---> val loss = {v_loss[i,j]}')
+        
+    # Training and Validation Heatmaps
+    plt.figure(figsize=(12,5))
+    plt.subplot(121)
+    ax = sns.heatmap(tr_loss, annot=True, annot_kws={"fontsize":FS}, cbar_kws={'label': 'Training Loss'}, vmin=np.min(tr_loss), vmax=np.max(tr_loss))
+    ax.set_xticklabels([0,1,2], fontsize=FS*3/4);
+    ax.set_yticklabels(['None','L1','L2','L1L2'], fontsize=FS*3/4);
+    plt.title('Training Losses', fontsize=FS)
+    plt.xlabel('Architecture Configuration', fontsize=FS)
+    plt.ylabel('Regularization', fontsize=FS)
+    plt.subplot(122)
+    ax = sns.heatmap(v_loss, annot=True, annot_kws={"fontsize":FS}, cbar_kws={'label': 'Validation Loss'}, vmin=np.min(v_loss), vmax=np.max(v_loss))
+    ax.set_xticklabels([0,1,2], fontsize=FS*3/4);
+    ax.set_yticklabels(['None','L1','L2','L1L2'], fontsize=FS*3/4);
+    plt.title('Validation Losses', fontsize=FS)
+    plt.xlabel('Architecture Configuration', fontsize=FS)
+    # plt.ylabel('Regularization', fontsize=FS)
+    plt.savefig('G:\\My Drive\\RPI\\MANE 6962 Machine Learning\\Project\\Figures\\NNRegArch1.png', dpi=300)
+    
+    # Training and Validation Epoch Plots
+    ct = 0
+    co = list(plt.rcParams['axes.prop_cycle'].by_key()['color']) + ['crimson', 'indigo', 'orange', 'red', 'blue', 'green', 'brown']
+    plt.figure(figsize=(12, 7))
+    for i in range(len(reg)):
+        for j in range(len(arch)):
+            plt.plot(np.arange(0, epoch, 1)+1, his[ct].history['loss'], '^--', linewidth=2, markersize=8, label=f'Training config. {j}, reg. {reg[i]}', color=co[ct])
+            plt.plot(np.arange(0, epoch, 1)+1, his[ct].history['val_loss'], 'v--', linewidth=2, markersize=8, label=f'Validation config. {j}, reg. {reg[i]}', color=co[ct])
+            ct = ct+1
+    plt.xlabel('Epoch', fontsize = FS)
+    plt.ylabel('Loss', fontsize = FS)
+    plt.title('Training/Testing Loss Comparison', fontsize = FS)
+    plt.legend(loc='upper right', ncol=2)
+    plt.savefig('G:\\My Drive\\RPI\\MANE 6962 Machine Learning\\Project\\Figures\\NNRegArch2.png', dpi=300)    
+    
+if nn5: # Refined Architecture and Regularization
+    tr_history = []
+    his = []
+    alpha = 0.03 # learning rate
+    opt1 = tf.keras.optimizers.legacy.SGD(learning_rate=alpha, momentum=0) # stochastic gradient descent optimizer
+    opt2 = tf.keras.optimizers.legacy.Adam(learning_rate=alpha) # adam
+    opt3 = tf.keras.optimizers.legacy.RMSprop(learning_rate=alpha, momentum=0)
+    opt = [opt1, opt2, opt3] # optularizers
+    optstr = ['SGD', 'Adam', 'RMSprop']
+    act = ['relu', 'sigmoid', 'tanh', 'selu', 'exponential']
+    epoch = 300 # number of epochs
+    # epoch = 3
+    nneur = 200 # number of neurons per input/hidden layer
+    # nneur = 20
+    mse = tf.keras.losses.MeanSquaredError(reduction=tf.keras.losses.Reduction.SUM) # mean squared error for loss calculation
+    
+    tr_loss = np.zeros([len(act),len(opt)])
+    v_loss = np.zeros([len(act),len(opt)])
+    for i in range(len(act)):
+        for j in range(len(opt)):
+            model = Sequential()
+            model.add(Dense(nneur, input_dim=n2, activation=act[i])) # input layer
+            model.add(Dense(nneur, activation=act[i], kernel_regularizer=regularizers.L1(1e-4)))
+            model.add(Dense(nneur, activation=act[i], kernel_regularizer=regularizers.L1(1e-4)))
+            model.add(Dense(nneur, activation=act[i], kernel_regularizer=regularizers.L1(1e-4)))
+            model.add(Dense(nneur, activation=act[i], kernel_regularizer=regularizers.L1(1e-4)))
+            model.add(Dense(3)) # one output neuron
+            model.compile(loss=mse, optimizer=opt[j], metrics=['mse', 'mae', 'mape'])
+            model.summary()
+            history1 = model.fit(X2_tr, y_tr, epochs=epoch, validation_data=(X2_test, y_test), verbose=0, use_multiprocessing=-2) # validation for monitoring validation loss and metrics at the end of each epoch
+            his.append(history1)
+            tr_loss[i,j] = np.min(history1.history['loss']) # history1.history['loss'][-1]
+            v_loss[i,j] = np.min(history1.history['val_loss']) #history1.history['val_loss'][-1]
+            print(f'Completed test with activation function {act[i]} and optimizer {optstr[j]} ---> val loss = {v_loss[i,j]}')
+        
+    # Training and Validation Heatmaps
+    plt.figure(figsize=(12,5))
+    plt.subplot(121)
+    ax = sns.heatmap(tr_loss, annot=True, annot_kws={"fontsize":FS}, cbar_kws={'label': 'Training Loss'}, vmin=np.min(tr_loss), vmax=np.max(tr_loss))
+    ax.set_xticklabels(optstr, fontsize=FS*3/4);
+    ax.set_yticklabels(act, fontsize=FS*3/4);
+    plt.title('Training Losses', fontsize=FS)
+    plt.xlabel('Activation Function', fontsize=FS)
+    plt.ylabel('Optimizer', fontsize=FS)
+    plt.subplot(122)
+    ax = sns.heatmap(v_loss, annot=True, annot_kws={"fontsize":FS}, cbar_kws={'label': 'Validation Loss'}, vmin=np.min(v_loss), vmax=np.max(v_loss))
+    ax.set_xticklabels(optstr, fontsize=FS*3/4);
+    ax.set_yticklabels(act, fontsize=FS*3/4);
+    plt.title('Validation Losses', fontsize=FS)
+    plt.xlabel('Activation Function', fontsize=FS)
+    # plt.ylabel('Optularization', fontsize=FS)
+    plt.savefig('G:\\My Drive\\RPI\\MANE 6962 Machine Learning\\Project\\Figures\\NNOptAct1.png', dpi=300)
+    
+    # Training and Validation Epoch Plots
+    ct = 0
+    co = list(plt.rcParams['axes.prop_cycle'].by_key()['color']) + ['crimson', 'indigo', 'orange', 'red', 'blue', 'green', 'brown']
+    plt.figure(figsize=(12, 7))
+    for i in range(len(act)):
+        for j in range(len(opt)):
+            if not np.isnan(tr_loss[i,j]):
+                plt.plot(np.arange(0, epoch, 1)+1, his[ct].history['loss'], '^--', linewidth=2, markersize=8, label=f'Training act. func. {act[i]}, opt. {optstr[j]}', color=co[ct])
+            if not np.isnan(v_loss[i,j]):
+                plt.plot(np.arange(0, epoch, 1)+1, his[ct].history['val_loss'], 'v--', linewidth=2, markersize=8, label=f'Validation act. func. {act[i]}, opt. {optstr[j]}', color=co[ct])
+            ct = ct+1
+    plt.xlabel('Epoch', fontsize = FS)
+    plt.ylabel('Loss', fontsize = FS)
+    plt.title('Training/Testing Loss Comparison', fontsize = FS)
+    plt.legend(loc='upper right', ncol=2)
+    plt.savefig('G:\\My Drive\\RPI\\MANE 6962 Machine Learning\\Project\\Figures\\NNOptAct2.png', dpi=300)    
