@@ -18,8 +18,8 @@ from keras import optimizers, regularizers
 
 ## Starting Parameters
 pp_plt = False # boolean to determine whether to plot pairplot figure
-nn1 = True # boolean: no. of neurons/no. of layers
-nn2 = False # boolean: learning rate/no. or epochs
+nn1 = False # boolean: no. of neurons/no. of layers
+nn2 = True # boolean: learning rate/no. or epochs
 nn3 = False # boolean: dropout layers
 nn4 = False # boolean: refined architecture/regularization
 nn5 = False # boolean: 
@@ -135,9 +135,9 @@ actf = 'relu'
 if nn1: # #neurons/#layers
     tr_history = []
     his = []
-    nneur = np.array([50, 100, 200]) # number of neurons per laayer (barring output layer)
-    nlayers = np.array([1, 2, 3, 4]) # number of hidden layers
-    # nneur = np.array([6, 7, 8]) # number of neurons per laayer (barring output layer)
+    nneur = np.array([400, 600, 1000]) # number of neurons per layer (barring output layer)
+    nlayers = np.array([6, 8, 10]) # number of hidden layers
+    # nneur = np.array([6, 7, 8]) # number of neurons per layer (barring output layer)
     # nlayers = np.array([1, 2]) # number of hidden layers
     epo = 300 # number of epochs
     # epo = 2 # number of epochs
@@ -148,7 +148,9 @@ if nn1: # #neurons/#layers
     tr_loss = np.zeros([len(nneur), len(nlayers)])
     v_loss = np.zeros([len(nneur), len(nlayers)])
     y_pred2 = []
+    y_pred2sub = []
     for i in range(len(nneur)):
+        y_pred2sub = []
         for j in range(len(nlayers)):
             model = Sequential()
             model.add(Dense(nneur[i], input_dim=n2, activation=actf)) # input layer
@@ -156,16 +158,17 @@ if nn1: # #neurons/#layers
                 model.add(Dense(nneur[i], activation=actf)) # repeat nlayers number of times
             model.add(Dense(3)) # one output neuron
             model.compile(loss=mse, optimizer=opt, metrics=['mse', 'mae', 'mape'])
-            # model.summary()
+            model.summary()
             history1 = model.fit(X2_tr, y_tr, epochs=epo, validation_data=(X2_test, y_test), verbose=0, use_multiprocessing=-3) # validation for monitoring validation loss and metrics at the end of each epoch
             history1.history['nneur'] = nneur[i]
             history1.history['nlayers'] = nlayers[j]
             his.append(history1)
             tr_loss[i,j] = np.min(history1.history['loss']) # history1.history['loss'][-1]
             v_loss[i,j] = np.min(history1.history['val_loss']) #history1.history['val_loss'][-1]
-            y_pred2.append(model.predict(X2_test, verbose=0, use_multiprocessing=-3))
+            y_pred2sub.append(model.predict(X2_test, verbose=0, use_multiprocessing=-3))
             print(f'Completed: nneur = {nneur[i]}, nlayers = {nlayers[j]} ---> val loss = {v_loss[i,j]}')
-
+        y_pred2.append(y_pred2sub)
+        
     # Training and Validation Heatmaps
     plt.figure(figsize=(12,5))
     plt.subplot(121)
@@ -182,7 +185,7 @@ if nn1: # #neurons/#layers
     plt.title('Validation Losses', fontsize=FS)
     plt.xlabel('Number of Layers', fontsize=FS)
     plt.ylabel('Number of Neurons per Layer', fontsize=FS)
-    plt.savefig('G:\\My Drive\\RPI\\MANE 6962 Machine Learning\\Project\\Figures\\NNArch1.png', dpi=300)
+    plt.savefig('G:\\My Drive\\RPI\\MANE 6962 Machine Learning\\Project\\Figures\\NNnneurnlayers1v3.png', dpi=300)
     
     # Training and Validation Epoch Plots
     ct = 0
@@ -198,47 +201,63 @@ if nn1: # #neurons/#layers
     # plt.ylim([0, 1.2*np.max(tr_history1.history['val_loss'])])
     plt.title('Training/Testing Loss Comparison', fontsize = FS)
     plt.legend(loc='upper right', ncol=2)
-    plt.savefig('G:\\My Drive\\RPI\\MANE 6962 Machine Learning\\Project\\Figures\\NNArch2.png', dpi=300)
+    plt.savefig('G:\\My Drive\\RPI\\MANE 6962 Machine Learning\\Project\\Figures\\NNnneurnlayers2v3.png', dpi=300)
     
-    plt.figure(figsize=(8, 5))
-    plt.plot(y_test[:,0], y_test[:,1], 'ko', label='Test Data')
-    for i in range(len(y_pred2)):
-        plt.plot(y_pred2[i][:,0], y_pred2[i][:,1], '*', label=f'{i}')
-    plt.legend(loc='upper right', ncol=2)
+    ct = 1
+    fig = plt.figure(figsize=(16, 10))
+    for i in range(len(nneur)):
+        for j in range(len(nlayers)):
+            plt.subplot(len(nneur), len(nlayers), ct)
+            plt.plot(y_test[:,0], y_test[:,1], 'ko', label='Test Data')
+            plt.plot(y_pred2[i][j][:,0], y_pred2[i][j][:,1], '*', label='Predicted Data')
+            plt.legend(loc='center right')
+            plt.title(f'nNeurons: {nneur[i]}, nLayers: {nlayers[j]}, ')
+            if j == 0:
+                plt.ylabel(r'$C_l$ (scaled)')
+            if i == len(nneur)-1:
+                plt.xlabel(r'$C_d$ (scaled)')
+            ct = ct+1
+    fig.tight_layout()
+    plt.savefig('G:\\My Drive\\RPI\\MANE 6962 Machine Learning\\Project\\Figures\\NNnneurnlayers3v3.png', dpi=300)
     
 if nn2: # Epoch/Learning Rate
     tr_history = []
     his = []
-    epoch = np.array([150, 200, 250, 300]) # number of epochs
-    alpha = np.array([0.01, 0.02, 0.03]) # learning rate
-    # epoch = np.array([6, 7, 8])
-    # alpha = np.array([0.01, 0.02])
-    nneur = 200 # number of neurons per input/hidden layer
-    # nneur = 20
+    nneur = 400
+    epoch = np.array([200, 300, 400]) # number of epochs
+    alpha = np.array([0.001, 0.002, 0.003, 0.004]) # learning rate
+    # epoch = np.array([6, 7, 8]) # number of epochs
+    # alpha = np.array([0.01, 0.02]) # learning rate
     mse = tf.keras.losses.MeanSquaredError(reduction=tf.keras.losses.Reduction.SUM) # mean squared error for loss calculation
     
     tr_loss = np.zeros([len(epoch), len(alpha)])
     v_loss = np.zeros([len(epoch), len(alpha)])
+    y_pred2 = []
+    y_pred2sub = []
     for i in range(len(epoch)):
+        y_pred2sub = []
         for j in range(len(alpha)):
             model = Sequential()
             model.add(Dense(nneur, input_dim=n2, activation=actf)) # input layer
-            model.add(Dense(nneur, activation=actf)) # repeat alpha number of times
-            model.add(Dense(nneur, activation=actf)) # repeat alpha number of times
-            model.add(Dense(nneur, activation=actf)) # repeat alpha number of times
-            model.add(Dense(nneur, activation=actf)) # repeat alpha number of times
+            model.add(Dense(nneur, activation=actf)) # hidden layer
+            model.add(Dense(nneur, activation=actf)) # hidden layer
+            model.add(Dense(nneur, activation=actf)) # hidden layer
+            model.add(Dense(nneur, activation=actf)) # hidden layer
             model.add(Dense(3)) # one output neuron
             opt = tf.keras.optimizers.legacy.SGD(learning_rate=alpha[j], momentum=0) # stochastic gradient descent optimizer
             model.compile(loss=mse, optimizer=opt, metrics=['mse', 'mae', 'mape'])
-            # model.summary()
-            history1 = model.fit(X2_tr, y_tr, epochs=epoch[i], validation_data=(X2_test, y_test), verbose=0, use_multiprocessing=-2) # validation for monitoring validation loss and metrics at the end of each epoch
+            model.summary()
+            history1 = model.fit(X2_tr, y_tr, epochs=epoch[i], validation_data=(X2_test, y_test), verbose=0, use_multiprocessing=-3)
             history1.history['epoch'] = epoch[i]
             history1.history['alpha'] = alpha[j]
             his.append(history1)
             tr_loss[i,j] = np.min(history1.history['loss']) # history1.history['loss'][-1]
             v_loss[i,j] = np.min(history1.history['val_loss']) #history1.history['val_loss'][-1]
+            y_pred2sub.append(model.predict(X2_test, verbose=0, use_multiprocessing=-3))
             print(f'Completed: epoch = {epoch[i]}, alpha = {alpha[j]} ---> val loss = {v_loss[i,j]}')
-
+        y_pred2.append(y_pred2sub)
+        
+        
     # Training and Validation Heatmaps
     plt.figure(figsize=(12,5))
     plt.subplot(121)
@@ -246,16 +265,16 @@ if nn2: # Epoch/Learning Rate
     ax.set_xticklabels(alpha, fontsize=FS*3/4);
     ax.set_yticklabels(epoch, fontsize=FS*3/4);
     plt.title('Training Losses', fontsize=FS)
-    plt.xlabel(r'$Learning Rate (\alpha$)', fontsize=FS)
-    plt.ylabel('Number of Epochs', fontsize=FS)
+    plt.xlabel('nEpochs', fontsize=FS)
+    plt.ylabel(r'$Learning Rate (\alpha$)', fontsize=FS)
     plt.subplot(122)
     ax = sns.heatmap(v_loss, annot=True, annot_kws={"fontsize":FS}, cbar_kws={'label': 'Validation Loss'}, vmin=np.min(v_loss), vmax=np.max(v_loss))
     ax.set_xticklabels(alpha, fontsize=FS*3/4);
     ax.set_yticklabels(epoch, fontsize=FS*3/4);
     plt.title('Validation Losses', fontsize=FS)
-    plt.xlabel(r'$Learning Rate (\alpha$)', fontsize=FS)
-    # plt.ylabel('Number of Epochs', fontsize=FS)
-    plt.savefig('G:\\My Drive\\RPI\\MANE 6962 Machine Learning\\Project\\Figures\\NNEpochLR1v2.png', dpi=300)
+    plt.xlabel('nEpochs', fontsize=FS)
+    plt.ylabel(r'$Learning Rate (\alpha$)', fontsize=FS)
+    plt.savefig('G:\\My Drive\\RPI\\MANE 6962 Machine Learning\\Project\\Figures\\NNepochalpha1.png', dpi=300)
     
     # Training and Validation Epoch Plots
     ct = 0
@@ -263,20 +282,32 @@ if nn2: # Epoch/Learning Rate
     plt.figure(figsize=(12, 7))
     for i in range(len(epoch)):
         for j in range(len(alpha)):
-            plt.plot(np.arange(1, his[ct].history['epoch']+1, 1), his[ct].history['loss'], '^--', linewidth=2, markersize=8, label=f'Training {epoch[i]} Epochs, {alpha[j]} Alpha', color=co[ct])
-            plt.plot(np.arange(1, his[ct].history['epoch']+1, 1), his[ct].history['val_loss'], 'v--', linewidth=2, markersize=8, label=f'Validation {epoch[i]} Epochs, {alpha[j]} Alpha', color=co[ct])
+            plt.plot(np.arange(his[ct].history['epoch']), his[ct].history['loss'], '^--', linewidth=2, markersize=8, label=rf'Training epcohs: {epoch[i]}, $\alpha$: {alpha[j]}', color=co[ct])
+            plt.plot(np.arange(his[ct].history['epoch']), his[ct].history['val_loss'], 'v--', linewidth=2, markersize=8, label=rf'Validation epcohs: {epoch[i]}, $\alpha$: {alpha[j]}', color=co[ct])
             ct = ct+1
     plt.xlabel('Epoch', fontsize = FS)
     plt.ylabel('Loss', fontsize = FS)
     # plt.ylim([0, 1.2*np.max(tr_history1.history['val_loss'])])
     plt.title('Training/Testing Loss Comparison', fontsize = FS)
     plt.legend(loc='upper right', ncol=2)
-    plt.savefig('G:\\My Drive\\RPI\\MANE 6962 Machine Learning\\Project\\Figures\\NNEpochLR2v2.png', dpi=300)
+    plt.savefig('G:\\My Drive\\RPI\\MANE 6962 Machine Learning\\Project\\Figures\\NNepochalpha2.png', dpi=300)
     
-    y_pred2 = model.predict(X2_test, verbose=0, use_multiprocessing=-3)
-    plt.figure(figsize=(8, 5))
-    plt.plot(y_test[:,0], y_test[:,1], 'ko', label='Test Data')
-    plt.plot(y_pred2[:,0], y_pred2[:,1], 'r*', label='Predictions')
+    ct = 1
+    fig = plt.figure(figsize=(16, 10))
+    for i in range(len(epoch)):
+        for j in range(len(alpha)):
+            plt.subplot(len(epoch), len(alpha), ct)
+            plt.plot(y_test[:,0], y_test[:,1], 'ko', label='Test Data')
+            plt.plot(y_pred2[i][j][:,0], y_pred2[i][j][:,1], '*', label='Predicted Data')
+            plt.legend(loc='center right')
+            plt.title(rf'epochs: {epoch[i]}, $\alpha$: {alpha[j]}, ')
+            if j == 0:
+                plt.ylabel(r'$C_l$ (scaled)')
+            if i == len(epoch)-1:
+                plt.xlabel(r'$C_d$ (scaled)')
+            ct = ct+1
+    fig.tight_layout()
+    plt.savefig('G:\\My Drive\\RPI\\MANE 6962 Machine Learning\\Project\\Figures\\NNepochalpha3.png', dpi=300)
 
 if nn3: # Dropout Layer 
     tr_history = []
