@@ -19,10 +19,10 @@ from keras import optimizers, regularizers
 ## Starting Parameters
 pp_plt = False # boolean to determine whether to plot pairplot figure
 nn1 = False # boolean: no. of neurons/no. of layers
-nn2 = True # boolean: learning rate/no. or epochs
+nn2 = False # boolean: learning rate/no. or epochs
 nn3 = False # boolean: dropout layers
 nn4 = False # boolean: refined architecture/regularization
-nn5 = False # boolean: 
+nn5 = True # boolean: 
 FS = 15 # font size for plotting labels
 
 ## Load Data
@@ -203,6 +203,7 @@ if nn1: # #neurons/#layers
     plt.legend(loc='upper right', ncol=2)
     plt.savefig('G:\\My Drive\\RPI\\MANE 6962 Machine Learning\\Project\\Figures\\NNnneurnlayers2v3.png', dpi=300)
     
+    # Output Parameters
     ct = 1
     fig = plt.figure(figsize=(16, 10))
     for i in range(len(nneur)):
@@ -265,15 +266,15 @@ if nn2: # Epoch/Learning Rate
     ax.set_xticklabels(alpha, fontsize=FS*3/4);
     ax.set_yticklabels(epoch, fontsize=FS*3/4);
     plt.title('Training Losses', fontsize=FS)
-    plt.xlabel('nEpochs', fontsize=FS)
-    plt.ylabel(r'$Learning Rate (\alpha$)', fontsize=FS)
+    plt.xlabel(r'Learning Rate ($\alpha$)', fontsize=FS)
+    plt.ylabel('nEpochs', fontsize=FS)
     plt.subplot(122)
     ax = sns.heatmap(v_loss, annot=True, annot_kws={"fontsize":FS}, cbar_kws={'label': 'Validation Loss'}, vmin=np.min(v_loss), vmax=np.max(v_loss))
     ax.set_xticklabels(alpha, fontsize=FS*3/4);
     ax.set_yticklabels(epoch, fontsize=FS*3/4);
     plt.title('Validation Losses', fontsize=FS)
-    plt.xlabel('nEpochs', fontsize=FS)
-    plt.ylabel(r'$Learning Rate (\alpha$)', fontsize=FS)
+    plt.xlabel(r'Learning Rate ($\alpha$)', fontsize=FS)
+    # plt.ylabel('nEpochs', fontsize=FS)
     plt.savefig('G:\\My Drive\\RPI\\MANE 6962 Machine Learning\\Project\\Figures\\NNepochalpha1.png', dpi=300)
     
     # Training and Validation Epoch Plots
@@ -292,6 +293,7 @@ if nn2: # Epoch/Learning Rate
     plt.legend(loc='upper right', ncol=2)
     plt.savefig('G:\\My Drive\\RPI\\MANE 6962 Machine Learning\\Project\\Figures\\NNepochalpha2.png', dpi=300)
     
+    # Output Parameters
     ct = 1
     fig = plt.figure(figsize=(16, 10))
     for i in range(len(epoch)):
@@ -312,39 +314,43 @@ if nn2: # Epoch/Learning Rate
 if nn3: # Dropout Layer 
     tr_history = []
     his = []
-    ind = np.array([0, 1, 2, 3, 4]) # number of epochs
-    alpha = 0.03 # learning rate
+    ind = np.array([0, 1, 2, 3, 4, 5]) # dropout layer position
+    alpha = 0.004 # learning rate
     epoch = 300 # number of epochs
     # epoch = 3
-    nneur = 200 # number of neurons per input/hidden layer
+    nneur = 400 # number of neurons per input/hidden layer
     # nneur = 20
     mse = tf.keras.losses.MeanSquaredError(reduction=tf.keras.losses.Reduction.SUM) # mean squared error for loss calculation
     
     tr_loss = np.zeros([len(ind),1])
     v_loss = np.zeros([len(ind),1])
+    y_pred2 = []
     for i in range(len(ind)):
         model = Sequential()
         model.add(Dense(nneur, input_dim=n2, activation=actf)) # input layer
         if ind[i] == 1:
             model.add(Dropout(0.2)) # Add dropout layer for specific trial
-        model.add(Dense(nneur, activation=actf)) # repeat alpha number of times
+        model.add(Dense(nneur, activation=actf))
         if ind[i] == 2:
             model.add(Dropout(0.2)) # Add dropout layer for specific trial
-        model.add(Dense(nneur, activation=actf)) # repeat alpha number of times
+        model.add(Dense(nneur, activation=actf))
         if ind[i] == 3:
             model.add(Dropout(0.2)) # Add dropout layer for specific trial
-        model.add(Dense(nneur, activation=actf)) # repeat alpha number of times
+        model.add(Dense(nneur, activation=actf))
         if ind[i] == 4:
             model.add(Dropout(0.2)) # Add dropout layer for specific trial
-        model.add(Dense(nneur, activation=actf)) # repeat alpha number of times
-        model.add(Dense(3)) # one output neuron
+        model.add(Dense(nneur, activation=actf))
+        if ind[i] == 5:
+            model.add(Dropout(0.2)) # Add dropout layer for specific trial
+        model.add(Dense(3)) # output layer
         opt = tf.keras.optimizers.legacy.SGD(learning_rate=alpha, momentum=0) # stochastic gradient descent optimizer
         model.compile(loss=mse, optimizer=opt, metrics=['mse', 'mae', 'mape'])
-        # model.summary()
+        model.summary()
         history1 = model.fit(X2_tr, y_tr, epochs=epoch, validation_data=(X2_test, y_test), verbose=0, use_multiprocessing=-2) # validation for monitoring validation loss and metrics at the end of each epoch
         his.append(history1)
         tr_loss[i] = np.min(history1.history['loss']) # history1.history['loss'][-1]
         v_loss[i] = np.min(history1.history['val_loss']) #history1.history['val_loss'][-1]
+        y_pred2.append(model.predict(X2_test, verbose=0, use_multiprocessing=-3))
         print(f'Completed test # {ind[i]} ---> val loss = {v_loss[i]}')
     
     # Training and Validation Heatmaps
@@ -353,14 +359,14 @@ if nn3: # Dropout Layer
     ax = sns.heatmap(tr_loss, annot=True, annot_kws={"fontsize":FS}, cbar_kws={'label': 'Training Loss'}, vmin=np.min(tr_loss), vmax=np.max(tr_loss))
     ax.set_yticklabels(ind, fontsize=FS*3/4);
     plt.title('Training Losses', fontsize=FS)
-    plt.xlabel('Dropout Test Index', fontsize=FS)
-    plt.ylabel('', fontsize=FS)
+    plt.xlabel('', fontsize=FS)
+    plt.ylabel('Dropout Test Index', fontsize=FS)
     plt.subplot(122)
     ax = sns.heatmap(v_loss, annot=True, annot_kws={"fontsize":FS}, cbar_kws={'label': 'Validation Loss'}, vmin=np.min(v_loss), vmax=np.max(v_loss))
     ax.set_yticklabels(ind, fontsize=FS*3/4);
     plt.title('Validation Losses', fontsize=FS)
-    plt.xlabel('Dropout Test Index', fontsize=FS)
-    # plt.ylabel('', fontsize=FS)
+    plt.xlabel('', fontsize=FS)
+    # plt.ylabel('Dropout Test index', fontsize=FS)
     plt.savefig('G:\\My Drive\\RPI\\MANE 6962 Machine Learning\\Project\\Figures\\NNDropout1.png', dpi=300)
     
     # Training and Validation Epoch Plots
@@ -368,8 +374,8 @@ if nn3: # Dropout Layer
     co = list(plt.rcParams['axes.prop_cycle'].by_key()['color']) + ['crimson', 'indigo', 'orange', 'red', 'blue', 'green', 'brown']
     plt.figure(figsize=(12, 7))
     for i in range(len(ind)):
-        plt.plot(np.arange(0, epoch, 1)+1, his[ct].history['loss'], '^--', linewidth=2, markersize=8, label=f'Training configuration {ind[i]}', color=co[ct])
-        plt.plot(np.arange(0, epoch, 1)+1, his[ct].history['val_loss'], 'v--', linewidth=2, markersize=8, label=f'Validation configuration {ind[i]}', color=co[ct])
+        plt.plot(np.arange(0, epoch, 1)+1, his[ct].history['loss'], '^--', linewidth=2, markersize=8, label=f'Training: dropout after layer {ind[i]+1}', color=co[ct])
+        plt.plot(np.arange(0, epoch, 1)+1, his[ct].history['val_loss'], 'v--', linewidth=2, markersize=8, label=f'Validation: dropout after layer {ind[i]+1}', color=co[ct])
         ct = ct+1
     plt.xlabel('Epoch', fontsize = FS)
     plt.ylabel('Loss', fontsize = FS)
@@ -377,10 +383,19 @@ if nn3: # Dropout Layer
     plt.legend(loc='upper right', ncol=2)
     plt.savefig('G:\\My Drive\\RPI\\MANE 6962 Machine Learning\\Project\\Figures\\NNDropout2.png', dpi=300)
     
-    y_pred2 = model.predict(X2_test, verbose=0, use_multiprocessing=-3)
-    plt.figure(figsize=(8, 5))
-    plt.plot(y_test[:,0], y_test[:,1], 'ko', label='Test Data')
-    plt.plot(y_pred2[:,0], y_pred2[:,1], 'r*', label='Predictions')
+    # Output Parameters
+    fig = plt.figure(figsize=(5, 12))
+    for i in range(len(ind)):
+        plt.subplot(len(ind), 1, i+1)
+        plt.plot(y_test[:,0], y_test[:,1], 'ko', label='Test Data')
+        plt.plot(y_pred2[i][:,0], y_pred2[i][:,1], '*', label='Predicted Data')
+        plt.legend(loc='center right')
+        plt.title(f'Dropout after Layer {ind[i]+1}')
+        plt.ylabel(r'$C_l$ (scaled)')
+        if i == len(ind)-1:
+            plt.xlabel(r'$C_d$ (scaled)')
+    fig.tight_layout()
+    plt.savefig('G:\\My Drive\\RPI\\MANE 6962 Machine Learning\\Project\\Figures\\NNDropout3.png', dpi=300)
 
 if nn4: # Refined Architecture and Regularization
     tr_history = []
@@ -392,9 +407,9 @@ if nn4: # Refined Architecture and Regularization
     arch.append(np.array([256, 256, 128, 128, 32]))
     alpha = 0.03 # learning rate
     epoch = 300 # number of epochs
-    # epoch = 3
+    epoch = 3
     nneur = 200 # number of neurons per input/hidden layer
-    # nneur = 20
+    nneur = 20
     mse = tf.keras.losses.MeanSquaredError(reduction=tf.keras.losses.Reduction.SUM) # mean squared error for loss calculation
     
     tr_loss = np.zeros([len(reg),len(arch)])
@@ -454,7 +469,7 @@ if nn4: # Refined Architecture and Regularization
     plt.plot(y_test[:,0], y_test[:,1], 'ko', label='Test Data')
     plt.plot(y_pred2[:,0], y_pred2[:,1], 'r*', label='Predictions')
     
-if nn5: # Refined Architecture and Regularization
+if nn5: # Activation Functions and Optimizers
     tr_history = []
     his = []
     alpha = 0.03 # learning rate
@@ -466,13 +481,15 @@ if nn5: # Refined Architecture and Regularization
     act = ['relu', 'sigmoid', 'tanh', 'selu', 'exponential']
     epoch = 300 # number of epochs
     # epoch = 3
-    nneur = 200 # number of neurons per input/hidden layer
+    nneur = 400 # number of neurons per input/hidden layer
     # nneur = 20
     mse = tf.keras.losses.MeanSquaredError(reduction=tf.keras.losses.Reduction.SUM) # mean squared error for loss calculation
     
     tr_loss = np.zeros([len(act),len(opt)])
     v_loss = np.zeros([len(act),len(opt)])
+    y_pred2 = []
     for i in range(len(act)):
+        y_pred2sub = []
         for j in range(len(opt)):
             model = Sequential()
             model.add(Dense(nneur, input_dim=n2, activation=act[i])) # input layer
@@ -487,25 +504,27 @@ if nn5: # Refined Architecture and Regularization
             his.append(history1)
             tr_loss[i,j] = np.min(history1.history['loss']) # history1.history['loss'][-1]
             v_loss[i,j] = np.min(history1.history['val_loss']) #history1.history['val_loss'][-1]
-            print(f'Completed test with activation function {act[i]} and optimizer {optstr[j]} ---> val loss = {v_loss[i,j]}')
+            y_pred2sub.append(model.predict(X2_test, verbose=0, use_multiprocessing=-3))
+            print(f'Completed test with {act[i]} and {optstr[j]} ---> val loss = {v_loss[i,j]}')
+        y_pred2.append(y_pred2sub)
         
     # Training and Validation Heatmaps
     plt.figure(figsize=(12,5))
     plt.subplot(121)
-    ax = sns.heatmap(tr_loss, annot=True, annot_kws={"fontsize":FS}, cbar_kws={'label': 'Training Loss'}, vmin=np.min(tr_loss), vmax=np.max(tr_loss))
+    ax = sns.heatmap(tr_loss, annot=True, annot_kws={"fontsize":FS}, cbar_kws={'label': 'Training Loss'}, vmin=0, vmax=np.max(tr_loss)) # hard code 0 b/c NaNs
     ax.set_xticklabels(optstr, fontsize=FS*3/4);
     ax.set_yticklabels(act, fontsize=FS*3/4);
     plt.title('Training Losses', fontsize=FS)
     plt.xlabel('Activation Function', fontsize=FS)
     plt.ylabel('Optimizer', fontsize=FS)
     plt.subplot(122)
-    ax = sns.heatmap(v_loss, annot=True, annot_kws={"fontsize":FS}, cbar_kws={'label': 'Validation Loss'}, vmin=np.min(v_loss), vmax=np.max(v_loss))
+    ax = sns.heatmap(v_loss, annot=True, annot_kws={"fontsize":FS}, cbar_kws={'label': 'Validation Loss'}, vmin=0, vmax=np.max(v_loss)) # hard code 0 b/c NaNs
     ax.set_xticklabels(optstr, fontsize=FS*3/4);
     ax.set_yticklabels(act, fontsize=FS*3/4);
     plt.title('Validation Losses', fontsize=FS)
     plt.xlabel('Activation Function', fontsize=FS)
     # plt.ylabel('Optularization', fontsize=FS)
-    plt.savefig('G:\\My Drive\\RPI\\MANE 6962 Machine Learning\\Project\\Figures\\NNOptAct1.png', dpi=300)
+    plt.savefig('G:\\My Drive\\RPI\\MANE 6962 Machine Learning\\Project\\Figures\\NNactopt1.png', dpi=300)
     
     # Training and Validation Epoch Plots
     ct = 0
@@ -514,17 +533,31 @@ if nn5: # Refined Architecture and Regularization
     for i in range(len(act)):
         for j in range(len(opt)):
             if not np.isnan(tr_loss[i,j]):
-                plt.plot(np.arange(0, epoch, 1)+1, his[ct].history['loss'], '^--', linewidth=2, markersize=8, label=f'Training act. func. {act[i]}, opt. {optstr[j]}', color=co[ct])
+                plt.plot(np.arange(0, epoch, 1)+1, his[ct].history['loss'], '^--', linewidth=2, markersize=8, label=f'Training: {act[i]}, {optstr[j]}', color=co[ct])
             if not np.isnan(v_loss[i,j]):
-                plt.plot(np.arange(0, epoch, 1)+1, his[ct].history['val_loss'], 'v--', linewidth=2, markersize=8, label=f'Validation act. func. {act[i]}, opt. {optstr[j]}', color=co[ct])
+                plt.plot(np.arange(0, epoch, 1)+1, his[ct].history['val_loss'], 'v--', linewidth=2, markersize=8, label=f'Validation: {act[i]}, {optstr[j]}', color=co[ct])
             ct = ct+1
     plt.xlabel('Epoch', fontsize = FS)
     plt.ylabel('Loss', fontsize = FS)
+    plt.ylim((0, 50))
     plt.title('Training/Testing Loss Comparison', fontsize = FS)
     plt.legend(loc='upper right', ncol=2)
-    plt.savefig('G:\\My Drive\\RPI\\MANE 6962 Machine Learning\\Project\\Figures\\NNOptAct2.png', dpi=300)    
+    plt.savefig('G:\\My Drive\\RPI\\MANE 6962 Machine Learning\\Project\\Figures\\NNactopt2.png', dpi=300)    
 
-    y_pred2 = model.predict(X2_test, verbose=0, use_multiprocessing=-3)
-    plt.figure(figsize=(8, 5))
-    plt.plot(y_test[:,0], y_test[:,1], 'ko', label='Test Data')
-    plt.plot(y_pred2[:,0], y_pred2[:,1], 'r*', label='Predictions')
+    # Output Parameters
+    ct = 1
+    fig = plt.figure(figsize=(10, 16))
+    for i in range(len(act)):
+        for j in range(len(opt)):
+            plt.subplot(len(act), len(opt), ct)
+            plt.plot(y_test[:,0], y_test[:,1], 'ko', label='Test Data')
+            plt.plot(y_pred2[i][j][:,0], y_pred2[i][j][:,1], '*', label='Predicted Data')
+            plt.legend(loc='center right')
+            plt.title(f'{act[i]}, {optstr[j]}')
+            if j == 0:
+                plt.ylabel(r'$C_l$ (scaled)')
+            if i == len(act)-1:
+                plt.xlabel(r'$C_d$ (scaled)')
+            ct = ct+1
+    fig.tight_layout()
+    plt.savefig('G:\\My Drive\\RPI\\MANE 6962 Machine Learning\\Project\\Figures\\NNactopt3.png', dpi=300)
