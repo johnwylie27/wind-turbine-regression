@@ -12,12 +12,12 @@ import matplotlib.pyplot as plt
 import tensorflow as tf
 from tensorflow import keras
 from keras.models import Sequential
-from keras.layers import Dense
+from keras.layers import Dense, Dropout
 from keras import optimizers, regularizers
 
 ## Starting Parameters
 pp_plt = 0 # boolean to determine whether to plot pairplot figure
-nn1 = True # boolean to determine whether to run the NN on the full data
+nn1 = False # boolean to determine whether to run the NN on the full data
 nn2 = True # boolean to determine whether to run the NN on the partial data
 nn3 = True # boolean to determine whether to run the NN on the pressure port data only
 FS = 15 # font size for plotting labels
@@ -92,30 +92,30 @@ if np.isnan(np.sum(X3)):
     sys.exit('X3 has NaN value')
 
 # Check that all data falls in the range of [0,1]
-plt.figure()
-for i in range(n1):
-    plt.plot(X1[:,i],'--')
-    plt.title('Scaled X1 Data')
-    plt.xlabel('Data Index')
-    plt.ylabel('Feature Value')
-plt.figure()
-for i in range(n2):
-    plt.plot(X2[:,i],'--')
-    plt.title('Scaled X2 Data')
-    plt.xlabel('Data Index')
-    plt.ylabel('Feature Value')
-plt.figure()
-for i in range(n3):
-    plt.plot(X3[:,i],'--')
-    plt.title('Scaled X3 Data')
-    plt.xlabel('Data Index')
-    plt.ylabel('Feature Value')
-plt.figure()
-for i in range(p):
-    plt.plot(y[:,i],'--')
-    plt.title('Scaled y Data')
-    plt.xlabel('Data Index')
-    plt.ylabel('Feature Value')
+# plt.figure()
+# for i in range(n1):
+#     plt.plot(X1[:,i],'--')
+#     plt.title('Scaled X1 Data')
+#     plt.xlabel('Data Index')
+#     plt.ylabel('Feature Value')
+# plt.figure()
+# for i in range(n2):
+#     plt.plot(X2[:,i],'--')
+#     plt.title('Scaled X2 Data')
+#     plt.xlabel('Data Index')
+#     plt.ylabel('Feature Value')
+# plt.figure()
+# for i in range(n3):
+#     plt.plot(X3[:,i],'--')
+#     plt.title('Scaled X3 Data')
+#     plt.xlabel('Data Index')
+#     plt.ylabel('Feature Value')
+# plt.figure()
+# for i in range(p):
+#     plt.plot(y[:,i],'--')
+#     plt.title('Scaled y Data')
+#     plt.xlabel('Data Index')
+#     plt.ylabel('Feature Value')
 
 ## Visualize the Data
 if pp_plt == 1:
@@ -128,17 +128,20 @@ X3_tr, X3_test, y_tr, y_test = train_test_split(X3, y, test_size=0.3)#, random_s
 
 ## Neural Networks
 actf = 'relu'
+alpha = [0.0001, 0.0001, 0.005] # learning rate for the optimizer
+epo = 200 # number of epochs
+nneur = 500
+
 if nn1: # Run NN on data with pressure ports
-    alpha = 0.005 # learning rate for the optimizer
-    epo = 200 # number of epochs
     model = Sequential()
-    model.add(Dense(100, input_dim=n1, activation=actf)) # one input neuron
-    model.add(Dense(100, activation=actf)) # single hidden layer
-    model.add(Dense(3)) # one output neuron
-    opt = tf.keras.optimizers.experimental.SGD(learning_rate=alpha, momentum=0) # stochastic gradient descent optimizer
+    model.add(Dense(nneur, input_dim=n1, activation=actf))
+    model.add(Dense(nneur, activation=actf))
+    model.add(Dense(3))
+    opt = tf.keras.optimizers.experimental.SGD(learning_rate=alpha[0], momentum=0) # stochastic gradient descent optimizer
     mse = tf.keras.losses.MeanSquaredError(reduction=tf.keras.losses.Reduction.SUM) # mean squared error for loss calculation
+    callback = tf.keras.callbacks.EarlyStopping(monitor='loss', patience=10)
     model.compile(loss=mse, optimizer=opt, metrics=['mse', 'mae', 'mape'])
-    tr_history1 = model.fit(X1_tr, y_tr, epochs=epo, validation_data=(X1_test, y_test), verbose=0, use_multiprocessing=-3) # validation for monitoring validation loss and metrics at the end of each epoch
+    tr_history1 = model.fit(X1_tr, y_tr, epochs=epo, validation_data=(X1_test, y_test), callbacks=[callback], verbose=0, use_multiprocessing=-3) # validation for monitoring validation loss and metrics at the end of each epoch
     model.summary()
     y_pred1 = model.predict(X1_test, verbose=0, use_multiprocessing=-3)
     # test_loss1 = mean_squared_error(y_test, y_pred1)
@@ -170,17 +173,18 @@ if nn1: # Run NN on data with pressure ports
     plt.plot(y_pred1[:,0], y_pred1[:,1], 'r*', label='Predictions')
     
 if nn2: # Run NN on data without pressure ports
-    alpha = 0.03 # learning rate for the optimizer
-    epo = 200 # number of epochs
-    nneur = 50
     model = Sequential()
     model.add(Dense(nneur, input_dim=n2, activation=actf, kernel_regularizer=regularizers.L1(1e-4))) # one input neuron
+    # model.add(Dropout(0.1))
     model.add(Dense(nneur, activation=actf, kernel_regularizer=regularizers.L1(1e-4))) # repeat alpha number of times
+    # model.add(Dropout(0.1))
     model.add(Dense(nneur, activation=actf, kernel_regularizer=regularizers.L1(1e-4))) # repeat alpha number of times
+    # model.add(Dropout(0.1))
     model.add(Dense(nneur, activation=actf, kernel_regularizer=regularizers.L1(1e-4))) # repeat alpha number of times
+    # model.add(Dropout(0.1))
     model.add(Dense(nneur, activation=actf, kernel_regularizer=regularizers.L1(1e-4))) # repeat alpha number of times
     model.add(Dense(3)) # one output neuron
-    opt = tf.keras.optimizers.experimental.RMSprop(learning_rate=alpha, momentum=0) # stochastic gradient descent optimizer
+    opt = tf.keras.optimizers.experimental.RMSprop(learning_rate=alpha[1], momentum=0) # stochastic gradient descent optimizer
     mse = tf.keras.losses.MeanSquaredError(reduction=tf.keras.losses.Reduction.SUM) # mean squared error for loss calculation
     callback = tf.keras.callbacks.EarlyStopping(monitor='loss', patience=10)
     model.compile(loss=mse, optimizer=opt, metrics=['mse', 'mae', 'mape'])
@@ -192,8 +196,8 @@ if nn2: # Run NN on data without pressure ports
     
     # Plot Results
     plt.figure(figsize=(8, 5))
-    plt.plot(tr_history2.epoch, tr_history2.history['loss'], 'o-', linewidth=0.5, markersize=2, label=('training loss'))
-    plt.plot(tr_history2.epoch, tr_history2.history['val_loss'], 'o-', linewidth=0.5, markersize=2, label=('validation loss'))
+    plt.plot(tr_history2.epoch, tr_history2.history['loss'], 'o-', linewidth=2, markersize=4, label=('training loss'))
+    plt.plot(tr_history2.epoch, tr_history2.history['val_loss'], 'o-', linewidth=2, markersize=4, label=('validation loss'))
     plt.xlabel('number of epochs', fontsize = FS)
     plt.ylabel('loss', fontsize = FS)
     plt.ylim([0, 1.5*np.max(tr_history2.history['val_loss'])])
@@ -202,8 +206,8 @@ if nn2: # Run NN on data without pressure ports
     plt.savefig('G:\\My Drive\\RPI\\MANE 6962 Machine Learning\\Project\\Figures\\X2_loss.png', dpi=300)
     
     plt.figure(figsize=(8, 5))
-    plt.plot(tr_history2.epoch, tr_history2.history['mse'], 'o-', linewidth=0.5, markersize=2, label=('training mse'))
-    plt.plot(tr_history2.epoch, tr_history2.history['val_mse'], 'o-', linewidth=0.5, markersize=2, label=('validation mse'))
+    plt.plot(tr_history2.epoch, tr_history2.history['mse'], 'o-', linewidth=2, markersize=4, label=('training mse'))
+    plt.plot(tr_history2.epoch, tr_history2.history['val_mse'], 'o-', linewidth=2, markersize=4, label=('validation mse'))
     plt.xlabel('number of epochs', fontsize = FS)
     plt.ylabel('loss metric: mse', fontsize = FS)
     plt.ylim([0, 1.5*np.max(tr_history2.history['val_mse'])])
@@ -217,21 +221,18 @@ if nn2: # Run NN on data without pressure ports
     plt.plot(y_pred2[:,0], y_pred2[:,1], 'r*', label='Predictions')
     
 if nn3: # Run NN on pressure port data only
-    alpha = 0.03 # learning rate for the optimizer
-    epo = 200 # number of epochs
-    nneur = 50
     model = Sequential()
-    model.add(Dense(nneur, input_dim=n2, activation=actf, kernel_regularizer=regularizers.L1(1e-4))) # one input neuron
+    model.add(Dense(nneur, input_dim=n3, activation=actf, kernel_regularizer=regularizers.L1(1e-4))) # one input neuron
     model.add(Dense(nneur, activation=actf, kernel_regularizer=regularizers.L1(1e-4))) # repeat alpha number of times
     model.add(Dense(nneur, activation=actf, kernel_regularizer=regularizers.L1(1e-4))) # repeat alpha number of times
     model.add(Dense(nneur, activation=actf, kernel_regularizer=regularizers.L1(1e-4))) # repeat alpha number of times
     model.add(Dense(nneur, activation=actf, kernel_regularizer=regularizers.L1(1e-4))) # repeat alpha number of times
     model.add(Dense(3)) # one output neuron
-    opt = tf.keras.optimizers.experimental.RMSprop(learning_rate=alpha, momentum=0) # stochastic gradient descent optimizer
+    opt = tf.keras.optimizers.experimental.RMSprop(learning_rate=alpha[2], momentum=0) # stochastic gradient descent optimizer
     mse = tf.keras.losses.MeanSquaredError(reduction=tf.keras.losses.Reduction.SUM) # mean squared error for loss calculation
     callback = tf.keras.callbacks.EarlyStopping(monitor='loss', patience=10)
     model.compile(loss=mse, optimizer=opt, metrics=['mse', 'mae', 'mape'])
-    tr_history3 = model.fit(X3_tr, y_tr, epochs=epo, validation_data=(X3_test, y_test), verbose=0, use_multiprocessing=-3)
+    tr_history3 = model.fit(X3_tr, y_tr, epochs=epo, validation_data=(X3_test, y_test), callbacks=[callback], verbose=0, use_multiprocessing=-3)
     model.summary()
     y_pred3 = model.predict(X3_test, verbose=0, use_multiprocessing=-3)
     # test_loss3 = mean_squared_error(y_test, y_pred3)
@@ -239,8 +240,8 @@ if nn3: # Run NN on pressure port data only
     
     # Plot Results
     plt.figure(figsize=(8, 5))
-    plt.plot(tr_history3.epoch, tr_history3.history['loss'], 'o-', linewidth=0.5, markersize=2, label=('training loss'))
-    plt.plot(tr_history3.epoch, tr_history3.history['val_loss'], 'o-', linewidth=0.5, markersize=2, label=('validation loss'))
+    plt.plot(tr_history3.epoch, tr_history3.history['loss'], 'o-', linewidth=2, markersize=4, label=('training loss'))
+    plt.plot(tr_history3.epoch, tr_history3.history['val_loss'], 'o-', linewidth=2, markersize=4, label=('validation loss'))
     plt.xlabel('number of epochs', fontsize = FS)
     plt.ylabel('loss', fontsize = FS)
     plt.ylim([0, 1.2*np.max(tr_history3.history['val_loss'])])
@@ -249,8 +250,8 @@ if nn3: # Run NN on pressure port data only
     # plt.savefig('G:\\My Drive\\RPI\\MANE 6962 Machine Learning\\Project\\Figures\\X3_loss.png', dpi=300)
     
     plt.figure(figsize=(8, 5))
-    plt.plot(tr_history3.epoch, tr_history3.history['mae'], 'o-', linewidth=0.5, markersize=2, label=('training mse'))
-    plt.plot(tr_history3.epoch, tr_history3.history['val_mae'], 'o-', linewidth=0.5, markersize=2, label=('validation mse'))
+    plt.plot(tr_history3.epoch, tr_history3.history['mae'], 'o-', linewidth=2, markersize=4, label=('training mse'))
+    plt.plot(tr_history3.epoch, tr_history3.history['val_mae'], 'o-', linewidth=2, markersize=4, label=('validation mse'))
     plt.xlabel('number of epochs', fontsize = FS)
     plt.ylabel('loss metric: mae', fontsize = FS)
     plt.ylim([0, 1.2*np.max(tr_history3.history['val_mae'])])

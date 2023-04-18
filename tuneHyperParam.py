@@ -18,11 +18,11 @@ from keras import optimizers, regularizers
 
 ## Starting Parameters
 pp_plt = False # boolean to determine whether to plot pairplot figure
-nn1 = False # boolean: no. of neurons/no. of layers
+nn1 = True # boolean: no. of neurons/no. of layers
 nn2 = False # boolean: learning rate/no. or epochs
 nn3 = False # boolean: dropout layers
 nn4 = False # boolean: refined architecture/regularization
-nn5 = True # boolean: 
+nn5 = False # boolean: 
 FS = 15 # font size for plotting labels
 
 ## Load Data
@@ -135,17 +135,19 @@ actf = 'relu'
 if nn1: # #neurons/#layers
     tr_history = []
     his = []
-    nneur = np.array([25, 50, 100, 200]) # number of neurons per laayer (barring output layer)
+    nneur = np.array([50, 100, 200]) # number of neurons per laayer (barring output layer)
     nlayers = np.array([1, 2, 3, 4]) # number of hidden layers
     # nneur = np.array([6, 7, 8]) # number of neurons per laayer (barring output layer)
     # nlayers = np.array([1, 2]) # number of hidden layers
     epo = 300 # number of epochs
-    alpha = 0.01 # learning rate for optimizer
+    # epo = 2 # number of epochs
+    alpha = 0.001 # learning rate for optimizer
     opt = tf.keras.optimizers.legacy.SGD(learning_rate=alpha, momentum=0) # stochastic gradient descent optimizer
     mse = tf.keras.losses.MeanSquaredError(reduction=tf.keras.losses.Reduction.SUM) # mean squared error for loss calculation
     
     tr_loss = np.zeros([len(nneur), len(nlayers)])
     v_loss = np.zeros([len(nneur), len(nlayers)])
+    y_pred2 = []
     for i in range(len(nneur)):
         for j in range(len(nlayers)):
             model = Sequential()
@@ -161,6 +163,7 @@ if nn1: # #neurons/#layers
             his.append(history1)
             tr_loss[i,j] = np.min(history1.history['loss']) # history1.history['loss'][-1]
             v_loss[i,j] = np.min(history1.history['val_loss']) #history1.history['val_loss'][-1]
+            y_pred2.append(model.predict(X2_test, verbose=0, use_multiprocessing=-3))
             print(f'Completed: nneur = {nneur[i]}, nlayers = {nlayers[j]} ---> val loss = {v_loss[i,j]}')
 
     # Training and Validation Heatmaps
@@ -196,6 +199,12 @@ if nn1: # #neurons/#layers
     plt.title('Training/Testing Loss Comparison', fontsize = FS)
     plt.legend(loc='upper right', ncol=2)
     plt.savefig('G:\\My Drive\\RPI\\MANE 6962 Machine Learning\\Project\\Figures\\NNArch2.png', dpi=300)
+    
+    plt.figure(figsize=(8, 5))
+    plt.plot(y_test[:,0], y_test[:,1], 'ko', label='Test Data')
+    for i in range(len(y_pred2)):
+        plt.plot(y_pred2[i][:,0], y_pred2[i][:,1], '*', label=f'{i}')
+    plt.legend(loc='upper right', ncol=2)
     
 if nn2: # Epoch/Learning Rate
     tr_history = []
@@ -263,6 +272,11 @@ if nn2: # Epoch/Learning Rate
     plt.title('Training/Testing Loss Comparison', fontsize = FS)
     plt.legend(loc='upper right', ncol=2)
     plt.savefig('G:\\My Drive\\RPI\\MANE 6962 Machine Learning\\Project\\Figures\\NNEpochLR2v2.png', dpi=300)
+    
+    y_pred2 = model.predict(X2_test, verbose=0, use_multiprocessing=-3)
+    plt.figure(figsize=(8, 5))
+    plt.plot(y_test[:,0], y_test[:,1], 'ko', label='Test Data')
+    plt.plot(y_pred2[:,0], y_pred2[:,1], 'r*', label='Predictions')
 
 if nn3: # Dropout Layer 
     tr_history = []
@@ -331,6 +345,11 @@ if nn3: # Dropout Layer
     plt.title('Training/Testing Loss Comparison', fontsize = FS)
     plt.legend(loc='upper right', ncol=2)
     plt.savefig('G:\\My Drive\\RPI\\MANE 6962 Machine Learning\\Project\\Figures\\NNDropout2.png', dpi=300)
+    
+    y_pred2 = model.predict(X2_test, verbose=0, use_multiprocessing=-3)
+    plt.figure(figsize=(8, 5))
+    plt.plot(y_test[:,0], y_test[:,1], 'ko', label='Test Data')
+    plt.plot(y_pred2[:,0], y_pred2[:,1], 'r*', label='Predictions')
 
 if nn4: # Refined Architecture and Regularization
     tr_history = []
@@ -398,6 +417,11 @@ if nn4: # Refined Architecture and Regularization
     plt.title('Training/Testing Loss Comparison', fontsize = FS)
     plt.legend(loc='upper right', ncol=2)
     plt.savefig('G:\\My Drive\\RPI\\MANE 6962 Machine Learning\\Project\\Figures\\NNRegArch2.png', dpi=300)    
+    
+    y_pred2 = model.predict(X2_test, verbose=0, use_multiprocessing=-3)
+    plt.figure(figsize=(8, 5))
+    plt.plot(y_test[:,0], y_test[:,1], 'ko', label='Test Data')
+    plt.plot(y_pred2[:,0], y_pred2[:,1], 'r*', label='Predictions')
     
 if nn5: # Refined Architecture and Regularization
     tr_history = []
@@ -468,3 +492,8 @@ if nn5: # Refined Architecture and Regularization
     plt.title('Training/Testing Loss Comparison', fontsize = FS)
     plt.legend(loc='upper right', ncol=2)
     plt.savefig('G:\\My Drive\\RPI\\MANE 6962 Machine Learning\\Project\\Figures\\NNOptAct2.png', dpi=300)    
+
+    y_pred2 = model.predict(X2_test, verbose=0, use_multiprocessing=-3)
+    plt.figure(figsize=(8, 5))
+    plt.plot(y_test[:,0], y_test[:,1], 'ko', label='Test Data')
+    plt.plot(y_pred2[:,0], y_pred2[:,1], 'r*', label='Predictions')
