@@ -2,9 +2,9 @@
 # This script performs a linear regression on the data files formatted in readData.py
 
 import sys
+import time
 import numpy as np
 import pandas as pd
-import sklearn
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import mean_squared_error
 import seaborn as sns
@@ -16,6 +16,7 @@ from keras.layers import Dense, Dropout
 from keras import optimizers, regularizers
 
 ## Starting Parameters
+t1 = time.time()
 pp_plt = 0 # boolean to determine whether to plot pairplot figure
 nn1 = False # boolean to determine whether to run the NN on the full data
 nn2 = True # boolean to determine whether to run the NN on the partial data
@@ -33,12 +34,12 @@ X1 = pd.DataFrame.to_numpy(dfX1, na_value=0) # make into numpy array
 y = pd.DataFrame.to_numpy(dfy, na_value=0) # make into numpy array
 
 # Abridged Dataset without Pressure Tap Data
-dfX2 = pd.concat([dfX1[dfX1.columns[:5]], dfX1[dfX1.columns[-4:]]], axis=1)
+dfX2 = pd.concat([dfX1[dfX1.columns[:4]], dfX1[dfX1.columns[-4:]]], axis=1)
 X2 = pd.DataFrame.to_numpy(dfX2) # make into numpy array
 # We don't need to repeat for y b/c it is the same for both full and abridged
 
 # Abridged Dataset with Pressure Ports Only
-dfX3 = dfX1[dfX1.columns[5:-4]]
+dfX3 = dfX1[dfX1.columns[4:-4]]
 X3 = pd.DataFrame.to_numpy(dfX3) # make into numpy array
 
 ## Preprocess Data
@@ -76,13 +77,6 @@ for i in range(p):
     scaley[i,0] = np.min(y[:,i])
     scaley[i,1] = np.max(y[:,i])
     y[:,i] = (y[:,i] - scaley[i,0]) / (scaley[i,1] - scaley[i,0])
-
-# Shift values
-c = 0
-X1 = X1 + c
-X2 = X2 + c
-X3 = X3 + c
-y = y + c
 
 if np.isnan(np.sum(X1)):
     sys.exit('X1 has NaN value')
@@ -122,15 +116,17 @@ if pp_plt == 1:
     sns.pairplot(dfX2, kind='scatter')
 
 ## Split Data into Training and Testing Splits
-X1_tr, X1_test, y_tr, y_test = train_test_split(X1, y, test_size=0.3)#, random_state=123)
-X2_tr, X2_test, y_tr, y_test = train_test_split(X2, y, test_size=0.3)#, random_state=123)
-X3_tr, X3_test, y_tr, y_test = train_test_split(X3, y, test_size=0.3)#, random_state=123)
+rs = 47
+X1_tr, X1_test, y_tr, y_test = train_test_split(X1, y, test_size=0.3, random_state=rs)
+X2_tr, X2_test, y_tr, y_test = train_test_split(X2, y, test_size=0.3, random_state=rs)
+X3_tr, X3_test, y_tr, y_test = train_test_split(X3, y, test_size=0.3, random_state=rs)
 
 ## Neural Networks
 actf = 'relu'
-alpha = [0.0001, 0.0001, 0.005] # learning rate for the optimizer
-epo = 200 # number of epochs
-nneur = 500
+alpha = [0.004, 0.004, 0.004] # learning rate for the optimizer
+reg = regularizers.L1(1e-4)
+epo = 400 # number of epochs
+nneur = [400, 600, 100]
 
 if nn1: # Run NN on data with pressure ports
     model = Sequential()
@@ -173,24 +169,26 @@ if nn1: # Run NN on data with pressure ports
     plt.plot(y_pred1[:,0], y_pred1[:,1], 'r*', label='Predictions')
     
 if nn2: # Run NN on data without pressure ports
+    nlayers = 8
+# =============================================================================
+#     nneur = 10
+#     nlayers = 1
+#     nneur = 2
+# =============================================================================
+    opt = tf.keras.optimizers.legacy.SGD(learning_rate=alpha[1], momentum=0) # stochastic gradient descent optimizer
+    mse = keras.losses.MeanSquaredError(reduction=tf.keras.losses.Reduction.SUM) # mean squared error for loss calculation
+    mse = keras.losses.MeanSquaredError()
+    callback = tf.keras.callbacks.EarlyStopping(monitor='loss', patience=50) # early stopping if does not improve
     model = Sequential()
-    model.add(Dense(nneur, input_dim=n2, activation=actf, kernel_regularizer=regularizers.L1(1e-4))) # one input neuron
-    # model.add(Dropout(0.1))
-    model.add(Dense(nneur, activation=actf, kernel_regularizer=regularizers.L1(1e-4))) # repeat alpha number of times
-    # model.add(Dropout(0.1))
-    model.add(Dense(nneur, activation=actf, kernel_regularizer=regularizers.L1(1e-4))) # repeat alpha number of times
-    # model.add(Dropout(0.1))
-    model.add(Dense(nneur, activation=actf, kernel_regularizer=regularizers.L1(1e-4))) # repeat alpha number of times
-    # model.add(Dropout(0.1))
-    model.add(Dense(nneur, activation=actf, kernel_regularizer=regularizers.L1(1e-4))) # repeat alpha number of times
-    model.add(Dense(3)) # one output neuron
-    opt = tf.keras.optimizers.experimental.RMSprop(learning_rate=alpha[1], momentum=0) # stochastic gradient descent optimizer
-    mse = tf.keras.losses.MeanSquaredError(reduction=tf.keras.losses.Reduction.SUM) # mean squared error for loss calculation
-    callback = tf.keras.callbacks.EarlyStopping(monitor='loss', patience=10)
+    model.add(Dense(nneur[1], input_dim=n2, activation=actf))#, kernel_regularizer=reg)) # input layer
+    for i in range(nlayers):
+        model.add(Dense(nneur[1], activation=actf))#, kernel_regularizer=reg)) # repeat nlayers number of times
+    model.add(Dropout(0.2))
+    model.add(Dense(3)) # output layer
     model.compile(loss=mse, optimizer=opt, metrics=['mse', 'mae', 'mape'])
     tr_history2 = model.fit(X2_tr, y_tr, epochs=epo, validation_data=(X2_test, y_test), callbacks=[callback], verbose=0, use_multiprocessing=-1) # validation for monitoring validation loss and metrics at the end of each epoch
     model.summary()
-    y_pred2 = model.predict(X2_test, verbose=0, use_multiprocessing=-3)
+    y_pred2 = model.predict(X2_test, verbose=0, use_multiprocessing=-2)
     test_loss2 = mean_squared_error(y_test, y_pred2)
     print(test_loss2)
     
@@ -219,24 +217,25 @@ if nn2: # Run NN on data without pressure ports
     plt.figure(figsize=(8, 5))
     plt.plot(y_test[:,0], y_test[:,1], 'ko', label='Test Data')
     plt.plot(y_pred2[:,0], y_pred2[:,1], 'r*', label='Predictions')
+    print('Finished nn2')
     
 if nn3: # Run NN on pressure port data only
     model = Sequential()
-    model.add(Dense(nneur, input_dim=n3, activation=actf, kernel_regularizer=regularizers.L1(1e-4))) # one input neuron
-    model.add(Dense(nneur, activation=actf, kernel_regularizer=regularizers.L1(1e-4))) # repeat alpha number of times
-    model.add(Dense(nneur, activation=actf, kernel_regularizer=regularizers.L1(1e-4))) # repeat alpha number of times
-    model.add(Dense(nneur, activation=actf, kernel_regularizer=regularizers.L1(1e-4))) # repeat alpha number of times
-    model.add(Dense(nneur, activation=actf, kernel_regularizer=regularizers.L1(1e-4))) # repeat alpha number of times
-    model.add(Dense(3)) # one output neuron
-    opt = tf.keras.optimizers.experimental.RMSprop(learning_rate=alpha[2], momentum=0) # stochastic gradient descent optimizer
+    model.add(Dense(nneur[2], input_dim=n3, activation=actf, kernel_regularizer=reg)) # input layer
+    model.add(Dense(nneur[2], activation=actf, kernel_regularizer=reg)) # repeat alpha number of times
+    model.add(Dense(nneur[2], activation=actf, kernel_regularizer=reg)) # repeat alpha number of times
+    model.add(Dense(nneur[2], activation=actf, kernel_regularizer=reg)) # repeat alpha number of times
+    model.add(Dense(nneur[2], activation=actf, kernel_regularizer=reg)) # repeat alpha number of times
+    model.add(Dense(3)) # output layer
+    opt = tf.keras.optimizers.legacy.SGD(learning_rate=alpha[2], momentum=0) # stochastic gradient descent optimizer
     mse = tf.keras.losses.MeanSquaredError(reduction=tf.keras.losses.Reduction.SUM) # mean squared error for loss calculation
-    callback = tf.keras.callbacks.EarlyStopping(monitor='loss', patience=10)
+    callback = tf.keras.callbacks.EarlyStopping(monitor='loss', patience=50)
     model.compile(loss=mse, optimizer=opt, metrics=['mse', 'mae', 'mape'])
     tr_history3 = model.fit(X3_tr, y_tr, epochs=epo, validation_data=(X3_test, y_test), callbacks=[callback], verbose=0, use_multiprocessing=-3)
     model.summary()
-    y_pred3 = model.predict(X3_test, verbose=0, use_multiprocessing=-3)
-    # test_loss3 = mean_squared_error(y_test, y_pred3)
-    # print(test_loss3)
+    y_pred3 = model.predict(X3_test, verbose=0, use_multiprocessing=-2)
+    test_loss3 = mean_squared_error(y_test, y_pred3)
+    print(test_loss3)
     
     # Plot Results
     plt.figure(figsize=(8, 5))
@@ -250,11 +249,11 @@ if nn3: # Run NN on pressure port data only
     # plt.savefig('G:\\My Drive\\RPI\\MANE 6962 Machine Learning\\Project\\Figures\\X3_loss.png', dpi=300)
     
     plt.figure(figsize=(8, 5))
-    plt.plot(tr_history3.epoch, tr_history3.history['mae'], 'o-', linewidth=2, markersize=4, label=('training mse'))
-    plt.plot(tr_history3.epoch, tr_history3.history['val_mae'], 'o-', linewidth=2, markersize=4, label=('validation mse'))
+    plt.plot(tr_history3.epoch, tr_history3.history['mse'], 'o-', linewidth=2, markersize=4, label=('training mse'))
+    plt.plot(tr_history3.epoch, tr_history3.history['val_mse'], 'o-', linewidth=2, markersize=4, label=('validation mse'))
     plt.xlabel('number of epochs', fontsize = FS)
-    plt.ylabel('loss metric: mae', fontsize = FS)
-    plt.ylim([0, 1.2*np.max(tr_history3.history['val_mae'])])
+    plt.ylabel('loss metric: mse', fontsize = FS)
+    plt.ylim([0, 1.2*np.max(tr_history3.history['val_mse'])])
     plt.title('Training/Testing Loss Comparison: Partial Data', fontsize = FS)
     plt.legend(loc='upper right')
     # plt.savefig('G:\\My Drive\\RPI\\MANE 6962 Machine Learning\\Project\\Figures\\X3_mae.png', dpi=300)
@@ -262,3 +261,30 @@ if nn3: # Run NN on pressure port data only
     plt.figure(figsize=(8, 5))
     plt.plot(y_test[:,0], y_test[:,1], 'ko', label='Test Data')
     plt.plot(y_pred3[:,0], y_pred3[:,1], 'r*', label='Predictions')
+    
+if nn2 and nn3:
+    fig = plt.figure(figsize=(5, 10))
+    plt.subplot(211)
+    plt.plot(y_test[:,0], y_test[:,1], 'ko', label='Test Data')
+    plt.plot(y_pred2[:,0], y_pred2[:,1], 'r*', label='Predictions')
+    plt.ylabel(r'$C_l$ (scaled)')
+    plt.title('Test Parameters')
+    plt.subplot(212)
+    plt.plot(y_test[:,0], y_test[:,1], 'ko', label='Test Data')
+    plt.plot(y_pred3[:,0], y_pred3[:,1], 'r*', label='Predictions')
+    plt.ylabel(r'$C_l$ (scaled)')
+    plt.xlabel(r'$C_d$ (scaled)')
+    plt.title('Pressure Port Data')
+    fig.tight_layout()
+    plt.savefig('G:\\My Drive\\RPI\\MANE 6962 Machine Learning\\Project\\Figures\\NNcompareX1X2_1.png', dpi=300)
+    
+    fig = plt.figure(figsize=(5, 5))
+    plt.plot(y_test[:,0], y_test[:,1], 'ko', label='Full Test Data')
+    plt.plot(y_pred2[:,0], y_pred2[:,1], 'g*', label='Test Parameters')
+    plt.plot(y_pred3[:,0], y_pred3[:,1], 'rx', label='Pressure Port Data')
+    plt.ylabel(r'$C_l$ (scaled)')
+    plt.xlabel(r'$C_d$ (scaled)')
+    plt.legend(loc='center right')
+    fig.tight_layout()
+    plt.savefig('G:\\My Drive\\RPI\\MANE 6962 Machine Learning\\Project\\Figures\\NNcompareX1X2_2.png', dpi=300)
+print(f'Duration: {time.time()-t1} seconds')
