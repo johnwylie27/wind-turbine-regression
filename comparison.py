@@ -86,11 +86,12 @@ if np.isnan(np.sum(X3)):
     sys.exit('X3 has NaN value')  
 
 ## Split Data into Training and Testing Splits
-rs = 61
+rs = 52
 X1_tr, X1_test, y_tr, y_test = train_test_split(X1, y, test_size=0.3, random_state=rs)
 X2_tr, X2_test, y_tr, y_test = train_test_split(X2, y, test_size=0.3, random_state=rs)
 X3_tr, X3_test, y_tr, y_test = train_test_split(X3, y, test_size=0.3, random_state=rs)
 
+#%% X2
 actf = 'relu'
 tr_history = []
 his = []
@@ -132,6 +133,7 @@ y_pred2 = model.predict(X2_test, verbose=0, use_multiprocessing=-2)
 print('Completed NN for X2')
 print(f'Duration: {time.time()-t1} seconds')
 
+#%% X3
 ## Pressure Data
 nneur = 400
 epoch = 400 # number of epochs
@@ -154,94 +156,110 @@ y_pred3 = model.predict(X3_test, verbose=0, use_multiprocessing=-2)
 test_loss3 = mean_squared_error(y_test, y_pred3)
 print(test_loss3)
 
-#%% Plotting
-# Rescale data back from [0,1] to original scaling
+
+#%% Rescale data back from [0,1] to original scaling
 for i in range(p):
     y_pred2[:,i] = (y_pred2[:,i]*(scaley[i,1] - scaley[i,0])) + scaley[i,0]
     y_pred3[:,i] = (y_pred3[:,i]*(scaley[i,1] - scaley[i,0])) + scaley[i,0]
     y_test[:,i] = (y_test[:,i]*(scaley[i,1] - scaley[i,0])) + scaley[i,0]
-
+    
+#%% Plotting
 # NN for X2
 # Training and Validation Epoch Plots
 co = list(plt.rcParams['axes.prop_cycle'].by_key()['color']) + ['crimson', 'indigo', 'orange', 'red', 'blue', 'green', 'brown']
-plt.figure(figsize=(12, 7))
-plt.plot(np.arange(len(his[0].history['loss'])), his[0].history['loss'], 'b^--', linewidth=2, markersize=8, label='Training')
-plt.plot(np.arange(len(his[0].history['loss'])), his[0].history['val_loss'], 'rv--', linewidth=2, markersize=8, label='Validation')
+plt.figure(figsize=(5, 5))
+plt.plot(np.arange(len(his[0].history['loss'])), his[0].history['loss'], 'b^--', linewidth=2, markersize=4, label='Training')
+plt.plot(np.arange(len(his[0].history['loss'])), his[0].history['val_loss'], 'rv--', linewidth=2, markersize=4, label='Validation')
 plt.xlabel('Epoch', fontsize = FS)
 plt.ylabel('Loss', fontsize = FS)
-# plt.ylim([0, 1.2*np.max(tr_history1.history['val_loss'])])
+plt.ylim([0, 1.2*np.max(his[0].history['val_loss'])])
 plt.title('Training/Validation Loss Comparison', fontsize = FS)
-plt.legend(loc='upper right')
+plt.legend(loc='upper right', fontsize = FS)
 plt.savefig('G:\\My Drive\\RPI\\MANE 6962 Machine Learning\\Project\\Figures\\NNFinalX2_1.png', dpi=300)
+
+plt.figure(figsize=(5, 5))
+plt.plot(np.arange(len(his[0].history['mse'])), his[0].history['mse'], 'b^--', linewidth=2, markersize=4, label=('Training'))
+plt.plot(np.arange(len(his[0].history['mse'])), his[0].history['val_mse'], 'rv--', linewidth=2, markersize=4, label=('Validation'))
+plt.xlabel('Epoch', fontsize = FS)
+plt.ylabel('MSE', fontsize = FS)
+plt.ylim([0, 1.2*np.max(his[0].history['val_mse'])])
+plt.title('Training/Validation Loss Comparison: Pressure Data', fontsize = FS)
+plt.legend(loc='upper right', fontsize = FS)
+plt.savefig('G:\\My Drive\\RPI\\MANE 6962 Machine Learning\\Project\\Figures\\X2_mse.png', dpi=300)
 
 # Output Parameters
 ct = 1
 fig = plt.figure(figsize=(5, 5))
-# plt.subplot(len(epoch), len(alpha), ct)
 plt.plot(y_test[:,0], y_test[:,1], 'ko', label='Test Data')
-plt.plot(y_pred2[:,0], y_pred2[:,1], 'g*', label='Predicted Data')
-plt.legend(loc='center right')
-# plt.title(rf'epochs: {epoch}, $\alpha$: {alpha}, ')
-plt.ylabel(r'$C_l$')
-plt.xlabel(r'$C_d$')
-# plt.xlim((-0.05, 1.05))
-# plt.ylim((-0.05, 1.05))
-# fig.tight_layout()
+plt.plot(y_pred2[:,0], y_pred2[:,1], 'g*', label='Test Parameters')
+plt.legend(loc='center right', fontsize = FS)
+plt.ylabel(r'$C_l$', fontsize = FS)
+plt.xlabel(r'$C_d$', fontsize = FS)
+plt.xlim((-0.05, 0.35))
+plt.ylim((-1.10, 1.4))
+fig.tight_layout()
 plt.savefig('G:\\My Drive\\RPI\\MANE 6962 Machine Learning\\Project\\Figures\\NNFinalX2_2.png', dpi=300)
 
 # NN for X3
-plt.figure(figsize=(5, 5))
-plt.plot(tr_history3.epoch, tr_history3.history['loss'], 'b^--', linewidth=2, markersize=4, label=('training loss'))
-plt.plot(tr_history3.epoch, tr_history3.history['val_loss'], 'rv--', linewidth=2, markersize=4, label=('validation loss'))
-plt.xlabel('number of epochs', fontsize = FS)
-plt.ylabel('loss', fontsize = FS)
+fig = plt.figure(figsize=(5, 5))
+plt.plot(tr_history3.epoch, tr_history3.history['loss'], 'b^--', linewidth=2, markersize=4, label=('Training'))
+plt.plot(tr_history3.epoch, tr_history3.history['val_loss'], 'rv--', linewidth=2, markersize=4, label=('Validation'))
+plt.xlabel('Epoch', fontsize = FS)
+plt.ylabel('Loss', fontsize = FS)
 plt.ylim([0, 1.2*np.max(tr_history3.history['val_loss'])])
 plt.title('Training/Validation Loss Comparison: Partial Data', fontsize = FS)
-plt.legend(loc='upper right')
+plt.legend(loc='upper right', fontsize = FS)
+fig.tight_layout()
 plt.savefig('G:\\My Drive\\RPI\\MANE 6962 Machine Learning\\Project\\Figures\\X3_loss.png', dpi=300)
 
-plt.figure(figsize=(5, 5))
-plt.plot(tr_history3.epoch, tr_history3.history['mse'], 'b^--', linewidth=2, markersize=4, label=('training mse'))
-plt.plot(tr_history3.epoch, tr_history3.history['val_mse'], 'rv--', linewidth=2, markersize=4, label=('validation mse'))
-plt.xlabel('number of epochs', fontsize = FS)
-plt.ylabel('loss metric: mse', fontsize = FS)
+fig = plt.figure(figsize=(5, 5))
+plt.plot(tr_history3.epoch, tr_history3.history['mse'], 'b^--', linewidth=2, markersize=4, label=('Training'))
+plt.plot(tr_history3.epoch, tr_history3.history['val_mse'], 'rv--', linewidth=2, markersize=4, label=('Validation'))
+plt.xlabel('Epoch', fontsize = FS)
+plt.ylabel('MSE', fontsize = FS)
 plt.ylim([0, 1.2*np.max(tr_history3.history['val_mse'])])
-plt.title('Training/Validation Loss Comparison: Partial Data', fontsize = FS)
-plt.legend(loc='upper right')
+plt.title('Training/Validation Loss Comparison: Pressure Data', fontsize = FS)
+plt.legend(loc='upper right', fontsize = FS)
+fig.tight_layout()
 plt.savefig('G:\\My Drive\\RPI\\MANE 6962 Machine Learning\\Project\\Figures\\X3_mse.png', dpi=300)
 
-plt.figure(figsize=(5, 5))
+fig = plt.figure(figsize=(5, 5))
 plt.plot(y_test[:,0], y_test[:,1], 'ko', label='Test Data')
-plt.plot(y_pred3[:,0], y_pred3[:,1], 'rx', label='Predictions')
-plt.ylabel(r'$C_l$')
-plt.xlabel(r'$C_d$')
-plt.legend(loc='center right')
+plt.plot(y_pred3[:,0], y_pred3[:,1], 'rx', label='Pressure Data')
+plt.ylabel(r'$C_l$', fontsize = FS)
+plt.xlabel(r'$C_d$', fontsize = FS)
+plt.xlim((-0.05, 0.35))
+plt.ylim((-1.10, 1.4))
+plt.legend(loc='center right', fontsize = FS)
+fig.tight_layout()
 plt.savefig('G:\\My Drive\\RPI\\MANE 6962 Machine Learning\\Project\\Figures\\NNcompareX3.png', dpi=300)
 
 fig = plt.figure(figsize=(5, 10))
 plt.subplot(211)
 plt.plot(y_test[:,0], y_test[:,1], 'ko', label='Test Data')
 plt.plot(y_pred2[:,0], y_pred2[:,1], 'g*', label='Test Parameters')
-plt.ylabel(r'$C_l$')
-plt.title('Test Parameters')
-plt.legend(loc='center right')
+plt.ylabel(r'$C_l$', fontsize = FS)
+plt.title('Test Parameters', fontsize = FS)
+plt.legend(loc='center right', fontsize = FS)
 plt.subplot(212)
 plt.plot(y_test[:,0], y_test[:,1], 'ko', label='Test Data')
 plt.plot(y_pred3[:,0], y_pred3[:,1], 'rx', label='Pressure Data')
-plt.ylabel(r'$C_l$')
-plt.xlabel(r'$C_d$')
-plt.title('Pressure Data')
-plt.legend(loc='center right')
+plt.ylabel(r'$C_l$', fontsize = FS)
+plt.xlabel(r'$C_d$', fontsize = FS)
+plt.title('Pressure Data', fontsize = FS)
+plt.legend(loc='center right', fontsize = FS)
 fig.tight_layout()
 plt.savefig('G:\\My Drive\\RPI\\MANE 6962 Machine Learning\\Project\\Figures\\NNcompareX2X3_1.png', dpi=300)
 
 fig = plt.figure(figsize=(5, 5))
-plt.plot(y_test[:,0], y_test[:,1], 'ko', label='Full Test Data')
+plt.plot(y_test[:,0], y_test[:,1], 'ko', label='Test Data')
 plt.plot(y_pred2[:,0], y_pred2[:,1], 'g*', label='Test Parameters')
 plt.plot(y_pred3[:,0], y_pred3[:,1], 'rx', label='Pressure Data')
-plt.ylabel(r'$C_l$')
-plt.xlabel(r'$C_d$')
-plt.legend(loc='center right')
+plt.ylabel(r'$C_l$', fontsize = FS)
+plt.xlabel(r'$C_d$', fontsize = FS)
+plt.xlim((-0.05, 0.35))
+plt.ylim((-1.10, 1.4))
+plt.legend(loc='center right', fontsize = FS)
 fig.tight_layout()
 plt.savefig('G:\\My Drive\\RPI\\MANE 6962 Machine Learning\\Project\\Figures\\NNcompareX2X3_2.png', dpi=300)
 
