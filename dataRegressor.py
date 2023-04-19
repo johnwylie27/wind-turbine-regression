@@ -150,7 +150,7 @@ if nn1: # Run NN on data with pressure ports
     plt.xlabel('number of epochs', fontsize = FS)
     plt.ylabel('loss', fontsize = FS)
     plt.ylim([0, 1.2*np.max(tr_history1.history['val_loss'])])
-    plt.title('Training/Testing Loss Comparison: Full Data', fontsize = FS)
+    plt.title('Training/Validation Loss Comparison: Full Data', fontsize = FS)
     plt.legend(loc='upper right')
     # plt.savefig('G:\\My Drive\\RPI\\MANE 6962 Machine Learning\\Project\\Figures\\X1_loss.png', dpi=300)
     
@@ -160,7 +160,7 @@ if nn1: # Run NN on data with pressure ports
     plt.xlabel('number of epochs', fontsize = FS)
     plt.ylabel('loss metric: mae', fontsize = FS)
     plt.ylim([0, 1.2*np.max(tr_history1.history['val_mae'])])
-    plt.title('Training/Testing Loss Comparison: Full Data', fontsize = FS)
+    plt.title('Training/Validation Loss Comparison: Full Data', fontsize = FS)
     plt.legend(loc='upper right')
     # plt.savefig('G:\\My Drive\\RPI\\MANE 6962 Machine Learning\\Project\\Figures\\X1_mae.png', dpi=300)
     
@@ -199,7 +199,7 @@ if nn2: # Run NN on data without pressure ports
     plt.xlabel('number of epochs', fontsize = FS)
     plt.ylabel('loss', fontsize = FS)
     plt.ylim([0, 1.5*np.max(tr_history2.history['val_loss'])])
-    plt.title('Training/Testing Loss Comparison: Partial Data', fontsize = FS)
+    plt.title('Training/Validation Loss Comparison: Partial Data', fontsize = FS)
     plt.legend(loc='upper right')
     plt.savefig('G:\\My Drive\\RPI\\MANE 6962 Machine Learning\\Project\\Figures\\X2_loss.png', dpi=300)
     
@@ -209,7 +209,7 @@ if nn2: # Run NN on data without pressure ports
     plt.xlabel('number of epochs', fontsize = FS)
     plt.ylabel('loss metric: mse', fontsize = FS)
     plt.ylim([0, 1.5*np.max(tr_history2.history['val_mse'])])
-    plt.title('Training/Testing Loss Comparison: Partial Data', fontsize = FS)
+    plt.title('Training/Validation Loss Comparison: Partial Data', fontsize = FS)
     plt.legend(loc='upper right')
     # plt.savefig('G:\\My Drive\\RPI\\MANE 6962 Machine Learning\\Project\\Figures\\X2_mse.png', dpi=300)
     
@@ -244,7 +244,7 @@ if nn3: # Run NN on pressure port data only
     plt.xlabel('number of epochs', fontsize = FS)
     plt.ylabel('loss', fontsize = FS)
     plt.ylim([0, 1.2*np.max(tr_history3.history['val_loss'])])
-    plt.title('Training/Testing Loss Comparison: Partial Data', fontsize = FS)
+    plt.title('Training/Validation Loss Comparison: Partial Data', fontsize = FS)
     plt.legend(loc='upper right')
     # plt.savefig('G:\\My Drive\\RPI\\MANE 6962 Machine Learning\\Project\\Figures\\X3_loss.png', dpi=300)
     
@@ -254,7 +254,7 @@ if nn3: # Run NN on pressure port data only
     plt.xlabel('number of epochs', fontsize = FS)
     plt.ylabel('loss metric: mse', fontsize = FS)
     plt.ylim([0, 1.2*np.max(tr_history3.history['val_mse'])])
-    plt.title('Training/Testing Loss Comparison: Partial Data', fontsize = FS)
+    plt.title('Training/Validation Loss Comparison: Partial Data', fontsize = FS)
     plt.legend(loc='upper right')
     # plt.savefig('G:\\My Drive\\RPI\\MANE 6962 Machine Learning\\Project\\Figures\\X3_mae.png', dpi=300)
     

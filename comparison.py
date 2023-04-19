@@ -86,7 +86,7 @@ if np.isnan(np.sum(X3)):
     sys.exit('X3 has NaN value')  
 
 ## Split Data into Training and Testing Splits
-rs = 43
+rs = 61
 X1_tr, X1_test, y_tr, y_test = train_test_split(X1, y, test_size=0.3, random_state=rs)
 X2_tr, X2_test, y_tr, y_test = train_test_split(X2, y, test_size=0.3, random_state=rs)
 X3_tr, X3_test, y_tr, y_test = train_test_split(X3, y, test_size=0.3, random_state=rs)
@@ -94,10 +94,10 @@ X3_tr, X3_test, y_tr, y_test = train_test_split(X3, y, test_size=0.3, random_sta
 actf = 'relu'
 tr_history = []
 his = []
-nneur = 600
-epoch = 400 # number of epochs
+nneur = 1000
+epoch = 1000 # number of epochs
 alpha = 0.004 # learning rate
-reg = regularizers.L1L2(1e-4)
+reg = regularizers.L2(1e-4)
 # epoch = np.array([6, 7, 8]) # number of epochs
 # alpha = np.array([0.01, 0.02]) # learning rate
 mse = tf.keras.losses.MeanSquaredError(reduction=tf.keras.losses.Reduction.SUM) # mean squared error for loss calculation
@@ -110,122 +110,139 @@ model.add(Dense(nneur, activation=actf, kernel_regularizer=reg)) # hidden layer
 model.add(Dense(nneur, activation=actf, kernel_regularizer=reg)) # hidden layer
 model.add(Dense(nneur, activation=actf, kernel_regularizer=reg)) # hidden layer
 model.add(Dense(nneur, activation=actf, kernel_regularizer=reg)) # hidden layer
+model.add(Dense(nneur, activation=actf, kernel_regularizer=reg)) # hidden layer
+model.add(Dropout(0.2)) # Add dropout layer
+model.add(Dense(nneur, activation=actf, kernel_regularizer=reg)) # hidden layer
+model.add(Dense(nneur, activation=actf, kernel_regularizer=reg)) # hidden layer
+model.add(Dense(nneur, activation=actf, kernel_regularizer=reg)) # hidden layer
+model.add(Dense(nneur, activation=actf, kernel_regularizer=reg)) # hidden layer
+model.add(Dense(nneur, activation=actf, kernel_regularizer=reg)) # hidden layer
 model.add(Dense(3)) # one output neuron
 opt = tf.keras.optimizers.legacy.SGD(learning_rate=alpha, momentum=0) # stochastic gradient descent optimizer
-model.compile(loss=mse, optimizer=opt, metrics=['mse', 'mae', 'mape'])
+model.compile(loss=mse, optimizer=opt, metrics=['mse'])
 model.summary()
-history1 = model.fit(X2_tr, y_tr, epochs=epoch, validation_data=(X2_test, y_test), verbose=0, use_multiprocessing=-2)
+callback = tf.keras.callbacks.EarlyStopping(monitor='loss', patience=50)
+history1 = model.fit(X2_tr, y_tr, epochs=epoch, validation_data=(X2_test, y_test), callbacks=callback, verbose=0, use_multiprocessing=-2)
 history1.history['epoch'] = epoch
 history1.history['alpha'] = alpha
 his.append(history1)
 tr_loss = np.min(history1.history['loss']) # history1.history['loss'][-1]
 v_loss = np.min(history1.history['val_loss']) #history1.history['val_loss'][-1]
 y_pred2 = model.predict(X2_test, verbose=0, use_multiprocessing=-2)
-print(f'Completed: epoch = {epoch}, alpha = {alpha} ---> val loss = {v_loss}')
+print('Completed NN for X2')
+print(f'Duration: {time.time()-t1} seconds')
 
+## Pressure Data
+nneur = 400
+epoch = 400 # number of epochs
+alpha = 0.004 # learning rate
+
+model = Sequential()
+model.add(Dense(nneur, input_dim=n3, activation=actf, kernel_regularizer=reg)) # input layer
+model.add(Dense(nneur, activation=actf, kernel_regularizer=reg)) # repeat alpha number of times
+model.add(Dense(nneur, activation=actf, kernel_regularizer=reg)) # repeat alpha number of times
+model.add(Dense(nneur, activation=actf, kernel_regularizer=reg)) # repeat alpha number of times
+model.add(Dense(nneur, activation=actf, kernel_regularizer=reg)) # repeat alpha number of times
+model.add(Dense(3)) # output layer
+opt = tf.keras.optimizers.legacy.SGD(learning_rate=alpha, momentum=0) # stochastic gradient descent optimizer
+mse = tf.keras.losses.MeanSquaredError(reduction=tf.keras.losses.Reduction.SUM) # mean squared error for loss calculation
+callback = tf.keras.callbacks.EarlyStopping(monitor='loss', patience=50)
+model.compile(loss=mse, optimizer=opt, metrics=['mse', 'mae', 'mape'])
+tr_history3 = model.fit(X3_tr, y_tr, epochs=epoch, validation_data=(X3_test, y_test), callbacks=[callback], verbose=0, use_multiprocessing=-3)
+model.summary()
+y_pred3 = model.predict(X3_test, verbose=0, use_multiprocessing=-2)
+test_loss3 = mean_squared_error(y_test, y_pred3)
+print(test_loss3)
+
+#%% Plotting
+# Rescale data back from [0,1] to original scaling
+for i in range(p):
+    y_pred2[:,i] = (y_pred2[:,i]*(scaley[i,1] - scaley[i,0])) + scaley[i,0]
+    y_pred3[:,i] = (y_pred3[:,i]*(scaley[i,1] - scaley[i,0])) + scaley[i,0]
+    y_test[:,i] = (y_test[:,i]*(scaley[i,1] - scaley[i,0])) + scaley[i,0]
+
+# NN for X2
 # Training and Validation Epoch Plots
 co = list(plt.rcParams['axes.prop_cycle'].by_key()['color']) + ['crimson', 'indigo', 'orange', 'red', 'blue', 'green', 'brown']
 plt.figure(figsize=(12, 7))
-plt.plot(np.arange(his[0].history['epoch']), his[0].history['loss'], 'b^--', linewidth=2, markersize=8, label=rf'Training epochs: {epoch}, $\alpha$: {alpha}', color=co[0])
-plt.plot(np.arange(his[0].history['epoch']), his[0].history['val_loss'], 'rv--', linewidth=2, markersize=8, label=rf'Validation epochs: {epoch}, $\alpha$: {alpha}', color=co[0])
+plt.plot(np.arange(len(his[0].history['loss'])), his[0].history['loss'], 'b^--', linewidth=2, markersize=8, label='Training')
+plt.plot(np.arange(len(his[0].history['loss'])), his[0].history['val_loss'], 'rv--', linewidth=2, markersize=8, label='Validation')
 plt.xlabel('Epoch', fontsize = FS)
 plt.ylabel('Loss', fontsize = FS)
 # plt.ylim([0, 1.2*np.max(tr_history1.history['val_loss'])])
-plt.title('Training/Testing Loss Comparison', fontsize = FS)
+plt.title('Training/Validation Loss Comparison', fontsize = FS)
 plt.legend(loc='upper right')
-# plt.savefig('G:\\My Drive\\RPI\\MANE 6962 Machine Learning\\Project\\Figures\\NNFinalX2_1.png', dpi=300)
+plt.savefig('G:\\My Drive\\RPI\\MANE 6962 Machine Learning\\Project\\Figures\\NNFinalX2_1.png', dpi=300)
 
 # Output Parameters
 ct = 1
 fig = plt.figure(figsize=(5, 5))
 # plt.subplot(len(epoch), len(alpha), ct)
 plt.plot(y_test[:,0], y_test[:,1], 'ko', label='Test Data')
-plt.plot(y_pred2[:,0], y_pred2[:,1], '*', label='Predicted Data')
+plt.plot(y_pred2[:,0], y_pred2[:,1], 'g*', label='Predicted Data')
 plt.legend(loc='center right')
 # plt.title(rf'epochs: {epoch}, $\alpha$: {alpha}, ')
-plt.ylabel(r'$C_l$ (scaled)')
-plt.xlabel(r'$C_d$ (scaled)')
+plt.ylabel(r'$C_l$')
+plt.xlabel(r'$C_d$')
+# plt.xlim((-0.05, 1.05))
+# plt.ylim((-0.05, 1.05))
 # fig.tight_layout()
-# plt.savefig('G:\\My Drive\\RPI\\MANE 6962 Machine Learning\\Project\\Figures\\NNFinalX2_2.png', dpi=300)
+plt.savefig('G:\\My Drive\\RPI\\MANE 6962 Machine Learning\\Project\\Figures\\NNFinalX2_2.png', dpi=300)
 
-print(f'Duration: {time.time()-t1} seconds')
+# NN for X3
+plt.figure(figsize=(5, 5))
+plt.plot(tr_history3.epoch, tr_history3.history['loss'], 'b^--', linewidth=2, markersize=4, label=('training loss'))
+plt.plot(tr_history3.epoch, tr_history3.history['val_loss'], 'rv--', linewidth=2, markersize=4, label=('validation loss'))
+plt.xlabel('number of epochs', fontsize = FS)
+plt.ylabel('loss', fontsize = FS)
+plt.ylim([0, 1.2*np.max(tr_history3.history['val_loss'])])
+plt.title('Training/Validation Loss Comparison: Partial Data', fontsize = FS)
+plt.legend(loc='upper right')
+plt.savefig('G:\\My Drive\\RPI\\MANE 6962 Machine Learning\\Project\\Figures\\X3_loss.png', dpi=300)
 
-## Pressure Data
-# =============================================================================
-# =============================================================================
-# # nneur = 400
-# # epoch = 400 # number of epochs
-# # alpha = 0.004 # learning rate
-# # 
-# # model = Sequential()
-# # model.add(Dense(nneur, input_dim=n3, activation=actf, kernel_regularizer=reg)) # input layer
-# # model.add(Dense(nneur, activation=actf, kernel_regularizer=reg)) # repeat alpha number of times
-# # model.add(Dense(nneur, activation=actf, kernel_regularizer=reg)) # repeat alpha number of times
-# # model.add(Dense(nneur, activation=actf, kernel_regularizer=reg)) # repeat alpha number of times
-# # model.add(Dense(nneur, activation=actf, kernel_regularizer=reg)) # repeat alpha number of times
-# # model.add(Dense(3)) # output layer
-# # opt = tf.keras.optimizers.legacy.SGD(learning_rate=alpha, momentum=0) # stochastic gradient descent optimizer
-# # mse = tf.keras.losses.MeanSquaredError(reduction=tf.keras.losses.Reduction.SUM) # mean squared error for loss calculation
-# # callback = tf.keras.callbacks.EarlyStopping(monitor='loss', patience=50)
-# # model.compile(loss=mse, optimizer=opt, metrics=['mse', 'mae', 'mape'])
-# # tr_history3 = model.fit(X3_tr, y_tr, epochs=epoch, validation_data=(X3_test, y_test), callbacks=[callback], verbose=0, use_multiprocessing=-3)
-# # model.summary()
-# # y_pred3 = model.predict(X3_test, verbose=0, use_multiprocessing=-2)
-# # test_loss3 = mean_squared_error(y_test, y_pred3)
-# # print(test_loss3)
-# =============================================================================
-# =============================================================================
+plt.figure(figsize=(5, 5))
+plt.plot(tr_history3.epoch, tr_history3.history['mse'], 'b^--', linewidth=2, markersize=4, label=('training mse'))
+plt.plot(tr_history3.epoch, tr_history3.history['val_mse'], 'rv--', linewidth=2, markersize=4, label=('validation mse'))
+plt.xlabel('number of epochs', fontsize = FS)
+plt.ylabel('loss metric: mse', fontsize = FS)
+plt.ylim([0, 1.2*np.max(tr_history3.history['val_mse'])])
+plt.title('Training/Validation Loss Comparison: Partial Data', fontsize = FS)
+plt.legend(loc='upper right')
+plt.savefig('G:\\My Drive\\RPI\\MANE 6962 Machine Learning\\Project\\Figures\\X3_mse.png', dpi=300)
 
-# Plot Results
-# =============================================================================
-# plt.figure(figsize=(5, 5))
-# plt.plot(tr_history3.epoch, tr_history3.history['loss'], 'o-', linewidth=2, markersize=4, label=('training loss'))
-# plt.plot(tr_history3.epoch, tr_history3.history['val_loss'], 'o-', linewidth=2, markersize=4, label=('validation loss'))
-# plt.xlabel('number of epochs', fontsize = FS)
-# plt.ylabel('loss', fontsize = FS)
-# plt.ylim([0, 1.2*np.max(tr_history3.history['val_loss'])])
-# plt.title('Training/Testing Loss Comparison: Partial Data', fontsize = FS)
-# plt.legend(loc='upper right')
-# # plt.savefig('G:\\My Drive\\RPI\\MANE 6962 Machine Learning\\Project\\Figures\\X3_loss.png', dpi=300)
-# 
-# plt.figure(figsize=(5, 5))
-# plt.plot(tr_history3.epoch, tr_history3.history['mse'], 'o-', linewidth=2, markersize=4, label=('training mse'))
-# plt.plot(tr_history3.epoch, tr_history3.history['val_mse'], 'o-', linewidth=2, markersize=4, label=('validation mse'))
-# plt.xlabel('number of epochs', fontsize = FS)
-# plt.ylabel('loss metric: mse', fontsize = FS)
-# plt.ylim([0, 1.2*np.max(tr_history3.history['val_mse'])])
-# plt.title('Training/Testing Loss Comparison: Partial Data', fontsize = FS)
-# plt.legend(loc='upper right')
-# # plt.savefig('G:\\My Drive\\RPI\\MANE 6962 Machine Learning\\Project\\Figures\\X3_mae.png', dpi=300)
-# 
-# plt.figure(figsize=(8, 5))
-# plt.plot(y_test[:,0], y_test[:,1], 'ko', label='Test Data')
-# plt.plot(y_pred3[:,0], y_pred3[:,1], 'r*', label='Predictions')
-# 
-# fig = plt.figure(figsize=(5, 10))
-# plt.subplot(211)
-# plt.plot(y_test[:,0], y_test[:,1], 'ko', label='Test Data')
-# plt.plot(y_pred2[:,0], y_pred2[:,1], 'r*', label='Predictions')
-# plt.ylabel(r'$C_l$ (scaled)')
-# plt.title('Test Parameters')
-# plt.subplot(212)
-# plt.plot(y_test[:,0], y_test[:,1], 'ko', label='Test Data')
-# plt.plot(y_pred3[:,0], y_pred3[:,1], 'r*', label='Predictions')
-# plt.ylabel(r'$C_l$ (scaled)')
-# plt.xlabel(r'$C_d$ (scaled)')
-# plt.title('Pressure Port Data')
-# fig.tight_layout()
-# # plt.savefig('G:\\My Drive\\RPI\\MANE 6962 Machine Learning\\Project\\Figures\\NNcompareX1X2_1.png', dpi=300)
-# 
-# fig = plt.figure(figsize=(5, 5))
-# plt.plot(y_test[:,0], y_test[:,1], 'ko', label='Full Test Data')
-# plt.plot(y_pred2[:,0], y_pred2[:,1], 'g*', label='Test Parameters')
-# plt.plot(y_pred3[:,0], y_pred3[:,1], 'rx', label='Pressure Port Data')
-# plt.ylabel(r'$C_l$ (scaled)')
-# plt.xlabel(r'$C_d$ (scaled)')
-# plt.legend(loc='center right')
-# fig.tight_layout()
-# =============================================================================
-# plt.savefig('G:\\My Drive\\RPI\\MANE 6962 Machine Learning\\Project\\Figures\\NNcompareX1X2_2.png', dpi=300)
+plt.figure(figsize=(5, 5))
+plt.plot(y_test[:,0], y_test[:,1], 'ko', label='Test Data')
+plt.plot(y_pred3[:,0], y_pred3[:,1], 'rx', label='Predictions')
+plt.ylabel(r'$C_l$')
+plt.xlabel(r'$C_d$')
+plt.legend(loc='center right')
+plt.savefig('G:\\My Drive\\RPI\\MANE 6962 Machine Learning\\Project\\Figures\\NNcompareX3.png', dpi=300)
+
+fig = plt.figure(figsize=(5, 10))
+plt.subplot(211)
+plt.plot(y_test[:,0], y_test[:,1], 'ko', label='Test Data')
+plt.plot(y_pred2[:,0], y_pred2[:,1], 'g*', label='Test Parameters')
+plt.ylabel(r'$C_l$')
+plt.title('Test Parameters')
+plt.legend(loc='center right')
+plt.subplot(212)
+plt.plot(y_test[:,0], y_test[:,1], 'ko', label='Test Data')
+plt.plot(y_pred3[:,0], y_pred3[:,1], 'rx', label='Pressure Data')
+plt.ylabel(r'$C_l$')
+plt.xlabel(r'$C_d$')
+plt.title('Pressure Data')
+plt.legend(loc='center right')
+fig.tight_layout()
+plt.savefig('G:\\My Drive\\RPI\\MANE 6962 Machine Learning\\Project\\Figures\\NNcompareX2X3_1.png', dpi=300)
+
+fig = plt.figure(figsize=(5, 5))
+plt.plot(y_test[:,0], y_test[:,1], 'ko', label='Full Test Data')
+plt.plot(y_pred2[:,0], y_pred2[:,1], 'g*', label='Test Parameters')
+plt.plot(y_pred3[:,0], y_pred3[:,1], 'rx', label='Pressure Data')
+plt.ylabel(r'$C_l$')
+plt.xlabel(r'$C_d$')
+plt.legend(loc='center right')
+fig.tight_layout()
+plt.savefig('G:\\My Drive\\RPI\\MANE 6962 Machine Learning\\Project\\Figures\\NNcompareX2X3_2.png', dpi=300)
 
 print(f'Duration: {time.time()-t1} seconds')

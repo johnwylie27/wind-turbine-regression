@@ -15,7 +15,7 @@ import tensorflow as tf
 # from tensorflow import keras
 from keras.models import Sequential
 from keras.layers import Dense, Dropout
-# from keras import optimizers, regularizers
+from keras import optimizers, regularizers
 
 ## Starting Parameters
 t1 = time.time()
@@ -195,7 +195,7 @@ if nn1: # #neurons/#layers
     plt.xlabel('Epoch', fontsize = FS)
     plt.ylabel('Loss', fontsize = FS)
     # plt.ylim([0, 1.2*np.max(tr_history1.history['val_loss'])])
-    plt.title('Training/Testing Loss Comparison', fontsize = FS)
+    plt.title('Training/Validation Loss Comparison', fontsize = FS)
     plt.legend(loc='upper right', ncol=2)
     # plt.savefig('G:\\My Drive\\RPI\\MANE 6962 Machine Learning\\Project\\Figures\\NNnneurnlayers2v3.png', dpi=300)
     
@@ -285,7 +285,7 @@ if nn2: # Epoch/Learning Rate
     plt.xlabel('Epoch', fontsize = FS)
     plt.ylabel('Loss', fontsize = FS)
     # plt.ylim([0, 1.2*np.max(tr_history1.history['val_loss'])])
-    plt.title('Training/Testing Loss Comparison', fontsize = FS)
+    plt.title('Training/Validation Loss Comparison', fontsize = FS)
     plt.legend(loc='upper right', ncol=2)
     # plt.savefig('G:\\My Drive\\RPI\\MANE 6962 Machine Learning\\Project\\Figures\\NNepochalpha2.png', dpi=300)
     
@@ -375,7 +375,7 @@ if nn3: # Dropout Layer
         ct = ct+1
     plt.xlabel('Epoch', fontsize = FS)
     plt.ylabel('Loss', fontsize = FS)
-    plt.title('Training/Testing Loss Comparison', fontsize = FS)
+    plt.title('Training/Validation Loss Comparison', fontsize = FS)
     plt.legend(loc='upper right', ncol=2)
     plt.savefig('G:\\My Drive\\RPI\\MANE 6962 Machine Learning\\Project\\Figures\\NNDropout2.png', dpi=300)
     
@@ -451,7 +451,7 @@ if nn4: # Regularization
             ct = ct+1
     plt.xlabel('Epoch', fontsize = FS)
     plt.ylabel('Loss', fontsize = FS)
-    plt.title('Training/Testing Loss Comparison', fontsize = FS)
+    plt.title('Training/Validation Loss Comparison', fontsize = FS)
     plt.legend(loc='upper right', ncol=2)
     plt.savefig('G:\\My Drive\\RPI\\MANE 6962 Machine Learning\\Project\\Figures\\NNReg2.png', dpi=300)    
     
@@ -540,7 +540,7 @@ if nn5: # Activation Functions and Optimizers
     plt.xlabel('Epoch', fontsize = FS)
     plt.ylabel('Loss', fontsize = FS)
     plt.ylim((0, 50))
-    plt.title('Training/Testing Loss Comparison', fontsize = FS)
+    plt.title('Training/Validation Loss Comparison', fontsize = FS)
     plt.legend(loc='upper right', ncol=2)
     plt.savefig('G:\\My Drive\\RPI\\MANE 6962 Machine Learning\\Project\\Figures\\NNactopt2.png', dpi=300)    
 
@@ -627,7 +627,7 @@ if nn5: # Activation Functions and Optimizers
 #             ct = ct+1
 #     plt.xlabel('Epoch', fontsize = FS)
 #     plt.ylabel('Loss', fontsize = FS)
-#     plt.title('Training/Testing Loss Comparison', fontsize = FS)
+#     plt.title('Training/Validation Loss Comparison', fontsize = FS)
 #     plt.legend(loc='upper right', ncol=2)
 #     plt.savefig('G:\\My Drive\\RPI\\MANE 6962 Machine Learning\\Project\\Figures\\NNRegArch2.png', dpi=300)    
 #     
