@@ -452,7 +452,7 @@ if nn4: # Regularization
     plt.xlabel('Epoch', fontsize = FS)
     plt.ylabel('Loss', fontsize = FS)
     plt.title('Training/Validation Loss Comparison', fontsize = FS)
-    plt.legend(loc='upper right', ncol=2)
+    plt.legend(loc='upper right', ncol=2, fontsize = FS)
     plt.savefig('G:\\My Drive\\RPI\\MANE 6962 Machine Learning\\Project\\Figures\\NNReg2.png', dpi=300)    
     
     # Output Parameters
@@ -461,11 +461,11 @@ if nn4: # Regularization
         plt.subplot(len(reg), 1, i+1)
         plt.plot(y_test[:,0], y_test[:,1], 'ko', label='Test Data')
         plt.plot(y_pred2[i][:,0], y_pred2[i][:,1], '*', label='Predicted Data')
-        plt.legend(loc='center right')
-        plt.title(f'Regularization: {regstr[i]}')
-        plt.ylabel(r'$C_l$ (scaled)')
+        plt.legend(loc='center right', fontsize = FS)
+        plt.title(f'Regularization: {regstr[i]}', fontsize = FS)
+        plt.ylabel(r'$C_l$ (scaled)', fontsize = FS)
         if i == len(reg)-1:
-            plt.xlabel(r'$C_d$ (scaled)')
+            plt.xlabel(r'$C_d$ (scaled)', fontsize = FS)
     fig.tight_layout()
     plt.savefig('G:\\My Drive\\RPI\\MANE 6962 Machine Learning\\Project\\Figures\\NNReg3.png', dpi=300)
     
@@ -553,12 +553,13 @@ if nn5: # Activation Functions and Optimizers
             plt.plot(y_test[:,0], y_test[:,1], 'ko', label='Test Data')
             plt.plot(y_pred2[i][j][:,0], y_pred2[i][j][:,1], '*', label='Predicted Data')
             plt.legend(loc='center right')
-            plt.title(f'{act[i]}, {optstr[j]}')
+            plt.title(f'{act[i]}, {optstr[j]}', fontsize = FS)
             if j == 0:
-                plt.ylabel(r'$C_l$ (scaled)')
+                plt.ylabel(r'$C_l$ (scaled)', fontsize = FS)
             if i == len(act)-1:
-                plt.xlabel(r'$C_d$ (scaled)')
+                plt.xlabel(r'$C_d$ (scaled)', fontsize = FS)
             ct = ct+1
+            plt.legend(loc='upper right', ncol=2)
     fig.tight_layout()
     plt.savefig('G:\\My Drive\\RPI\\MANE 6962 Machine Learning\\Project\\Figures\\NNactopt3.png', dpi=300)
     

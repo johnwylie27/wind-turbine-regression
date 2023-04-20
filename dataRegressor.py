@@ -17,10 +17,10 @@ from keras import optimizers, regularizers
 
 ## Starting Parameters
 t1 = time.time()
-pp_plt = 0 # boolean to determine whether to plot pairplot figure
+pp_plt = True # boolean to determine whether to plot pairplot figure
 nn1 = False # boolean to determine whether to run the NN on the full data
-nn2 = True # boolean to determine whether to run the NN on the partial data
-nn3 = True # boolean to determine whether to run the NN on the pressure port data only
+nn2 = False # boolean to determine whether to run the NN on the partial data
+nn3 = False # boolean to determine whether to run the NN on the pressure port data only
 FS = 15 # font size for plotting labels
 
 ## Load Data
@@ -111,17 +111,26 @@ if np.isnan(np.sum(X3)):
 #     plt.xlabel('Data Index')
 #     plt.ylabel('Feature Value')
 
-## Visualize the Data
-if pp_plt == 1:
+#%% Visualize the Data
+if pp_plt:
+    fig = plt.figure(figsize=(20,20))
     sns.pairplot(dfX2, kind='scatter')
+    plt.savefig('G:\\My Drive\\RPI\\MANE 6962 Machine Learning\\Project\\Figures\\PairplotX2.png', dpi=300)
+    
+# You need a LONG time (order of 4e3 seconds) to run this dang line (64 X 64 pairplot):
+# =============================================================================
+#     fig = plt.figure(figsize=(20,20))
+#     sns.pairplot(dfX3, kind='scatter')
+#     plt.savefig('G:\\My Drive\\RPI\\MANE 6962 Machine Learning\\Project\\Figures\\PairplotX3.png', dpi=300)
+# =============================================================================
 
-## Split Data into Training and Testing Splits
+#%% Split Data into Training and Testing Splits
 rs = 47
 X1_tr, X1_test, y_tr, y_test = train_test_split(X1, y, test_size=0.3, random_state=rs)
 X2_tr, X2_test, y_tr, y_test = train_test_split(X2, y, test_size=0.3, random_state=rs)
 X3_tr, X3_test, y_tr, y_test = train_test_split(X3, y, test_size=0.3, random_state=rs)
 
-## Neural Networks
+#%% Neural Networks
 actf = 'relu'
 alpha = [0.004, 0.004, 0.004] # learning rate for the optimizer
 reg = regularizers.L1(1e-4)
