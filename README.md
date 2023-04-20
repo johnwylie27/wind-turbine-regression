@@ -30,4 +30,4 @@ Additional information about the surface roughness is included in the file names
 
 The majority of preprocessing will include extracting the information from the text files and loading it into python for implementation. The features will be scaled and normalized as needed. Negative values will be changed to positive to avoid issues with activation functions such as ReLU. Data regularization may also be necessary.
 
-The remainder of the project after data pre-processing will include dimensionality reduction and regression. Since the data can contain as many as the 78 features named above, dimensionality reduction is necessary and critical for proper regression to be performed.
+The remainder of the project after data pre-processing includes regression and hyper parameter tuning.
