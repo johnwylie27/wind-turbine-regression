@@ -17,7 +17,7 @@ from keras import optimizers, regularizers
 
 ## Starting Parameters
 t1 = time.time()
-pp_plt = True # boolean to determine whether to plot pairplot figure
+pp_plt = False # boolean to determine whether to plot pairplot figure
 nn1 = False # boolean to determine whether to run the NN on the full data
 nn2 = False # boolean to determine whether to run the NN on the partial data
 nn3 = False # boolean to determine whether to run the NN on the pressure port data only
@@ -86,30 +86,33 @@ if np.isnan(np.sum(X3)):
     sys.exit('X3 has NaN value')
 
 # Check that all data falls in the range of [0,1]
-# plt.figure()
-# for i in range(n1):
-#     plt.plot(X1[:,i],'--')
-#     plt.title('Scaled X1 Data')
-#     plt.xlabel('Data Index')
-#     plt.ylabel('Feature Value')
-# plt.figure()
-# for i in range(n2):
-#     plt.plot(X2[:,i],'--')
-#     plt.title('Scaled X2 Data')
-#     plt.xlabel('Data Index')
-#     plt.ylabel('Feature Value')
-# plt.figure()
-# for i in range(n3):
-#     plt.plot(X3[:,i],'--')
-#     plt.title('Scaled X3 Data')
-#     plt.xlabel('Data Index')
-#     plt.ylabel('Feature Value')
-# plt.figure()
-# for i in range(p):
-#     plt.plot(y[:,i],'--')
-#     plt.title('Scaled y Data')
-#     plt.xlabel('Data Index')
-#     plt.ylabel('Feature Value')
+plt.figure()
+for i in range(n1):
+    plt.plot(X1[:,i],'--')
+    plt.title('Scaled X1 Data')
+    plt.xlabel('Data Index')
+    plt.ylabel('Feature Value')
+plt.figure()
+for i in range(n2):
+    plt.plot(X2[:,i],'--')
+    plt.title('Scaled Test Parameters')
+    plt.xlabel('Data Index')
+    plt.ylabel('Feature Value')
+    plt.savefig('G:\\My Drive\\RPI\\MANE 6962 Machine Learning\\Project\\Figures\\rescaleX2.png', dpi=300)
+plt.figure()
+for i in range(n3):
+    plt.plot(X3[:,i],'--')
+    plt.title('Scaled Pressure Data')
+    plt.xlabel('Data Index')
+    plt.ylabel('Feature Value')
+    plt.savefig('G:\\My Drive\\RPI\\MANE 6962 Machine Learning\\Project\\Figures\\rescaleX3.png', dpi=300)
+plt.figure()
+for i in range(p):
+    plt.plot(y[:,i],'--')
+    plt.title('Scaled Target Features')
+    plt.xlabel('Data Index')
+    plt.ylabel('Feature Value')
+    plt.savefig('G:\\My Drive\\RPI\\MANE 6962 Machine Learning\\Project\\Figures\\rescaleY.png', dpi=300)
 
 #%% Visualize the Data
 if pp_plt:
