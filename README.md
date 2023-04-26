@@ -14,13 +14,10 @@ The wind tunnel data, the focus of this project, includes aerodynamic measuremen
 * Lift coefficient, C_l
 * Drag coefficient, C_d
 * Moment coefficient, C_m
-* Normal force coefficient, C_n
-* Tangential force coefficient, C_t
 * Reynolds number, Re
 * Mach number, M
 * Dynamic pressure, Q
 * Free stream velocity, V
-* Flap deflection
 * Pressure coefficient (at each static pressure port - 40 on the upper suction side and 23 on the lower pressure side.
 
 Additional information about the surface roughness is included in the file names and described in the test matrix. New features can include:
@@ -28,6 +25,16 @@ Additional information about the surface roughness is included in the file names
 * Upper leading edge length covered
 * Lower leading edge length covered
 
-The majority of preprocessing will include extracting the information from the text files and loading it into python for implementation. The features are scaled and normalized as needed. Negative values are changed to positive to avoid issues with activation functions such as ReLu. Data regularization may also be necessary.
+The majority of preprocessing includes extracting the information from the text files and loading it into python for implementation (readData.py). The features are scaled and normalized as needed. Negative values are changed to positive to avoid issues with activation functions such as ReLu. 
 
 The remainder of the project after data pre-processing includes regression and hyper parameter tuning.
+
+# Getting Started
+Ensure that you have Python version 3.10 with the packages listed in piplist.txt. Download the data from the [zenodo.org](https://zenodo.org/record/3482801) link.
+
+# Scripts
+* readData.py - reads the data from the raw data files and generates .csv files containing the data of interest for faster loading in the other scripts
+* dataRegressor.py - runs a simple ANN for different subsets of the data (i.e., pressure data, test parameters, and both)
+* linearRegressor.py - brief code that uses a linear regression implementation from SciKit-Learn to compare to the ANN (unfinished)
+* tuneHyperParam.py - shows the hyper parameter tuning and investigation to refine the final ANN architecture and attributes in comparison.py
+* comparison.py - Final comparison of the ANNs for the pressure data and the test parameters
